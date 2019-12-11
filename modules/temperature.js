@@ -1,7 +1,7 @@
 const axios = require("axios");
 const fs = require('fs');
 const Influx = require('influxdb-nodejs');
-const influxClient = new Influx('http://127.0.0.1:8086/raspweather-staging');
+const influxClient = new Influx('http://127.0.0.1:8086/raspweather-outside');
 
 const writeLog = function(temperatureFloat) {
     var logEntry = new Date().toString() + ';' + temperatureFloat + '\n';

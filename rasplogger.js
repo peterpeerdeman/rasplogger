@@ -4,8 +4,7 @@ const express = require('express');
 const CronJob = require('cron').CronJob;
 
 const logTemperature =  require('./modules/temperature.js').logTemperature;
-
-const logOutsideTemp = new CronJob({
+const logTemperatureJob = new CronJob({
     cronTime: '*/5 * * * *',
     onTick: function() {
         logTemperature();
@@ -14,5 +13,16 @@ const logOutsideTemp = new CronJob({
     timeZone: 'Europe/Amsterdam'
 });
 
-logOutsideTemp.start();
-console.log('Datalogger activated');
+const logLights =  require('./modules/lights.js').logLights;
+const logLightsJob = new CronJob({
+    cronTime: '*/5 * * * *',
+    onTick: function() {
+        logLights();
+    },
+    start: true,
+    timeZone: 'Europe/Amsterdam'
+});
+
+logTemperatureJob.start();
+logLightsJob.start();
+console.log(`${Date.now()} RaspLogger activated`);

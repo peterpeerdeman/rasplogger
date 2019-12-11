@@ -8,6 +8,7 @@
     "cron": "^1.2.1",
     "dotenv": "^4.0.0",
     "influxdb-nodejs": "^3.1.0",
+    "node-hue-api": "^3.4.3",
     "request": "^2.65.0"
   },
   "devDependencies": {},
