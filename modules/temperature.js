@@ -14,8 +14,8 @@ const writeInflux = function(temperatureFloat) {
     influxClient.write('file').field({
         time: Date.now(),
         temperature: temperatureFloat,
-    }).then(() => console.debug(`${Date.now()} influx write point success`))
-    .catch(console.error);
+    }).then(() => console.debug(`${Date.now()} temperature: influx write point success`))
+    .catch((error) => console.debug(`${Date.now()} temperature: retrieve temperature failed ${error}`));
 }
 
 const logTemperature = async url => {
@@ -27,7 +27,7 @@ const logTemperature = async url => {
         writeLog(temperatureFloat);
         writeInflux(temperatureFloat);
     } catch (error) {
-        console.log(error);
+        console.debug(`${Date.now()} temperature: retrieve temperature failed ${error}`);
     }
 }
 
