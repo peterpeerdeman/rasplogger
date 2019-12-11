@@ -1,0 +1,27 @@
+{
+  "name": "rasplogger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "rasplogger.js",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "cron": "^1.2.1",
+    "dotenv": "^4.0.0",
+    "influxdb-nodejs": "^3.1.0",
+    "request": "^2.65.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peterpeerdeman/rasplogger.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/peterpeerdeman/rasplogger/issues"
+  },
+  "homepage": "https://github.com/peterpeerdeman/rasplogger#readme"
+}
