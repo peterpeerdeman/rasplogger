@@ -12,6 +12,7 @@ const logTemperatureJob = new CronJob({
     start: true,
     timeZone: 'Europe/Amsterdam'
 });
+logTemperatureJob.start();
 
 const logLights =  require('./modules/lights.js').logLights;
 const logLightsJob = new CronJob({
@@ -22,7 +23,17 @@ const logLightsJob = new CronJob({
     start: true,
     timeZone: 'Europe/Amsterdam'
 });
-
-logTemperatureJob.start();
 logLightsJob.start();
+
+const logPV =  require('./modules/pv.js').logPV;
+const logPVJob = new CronJob({
+    cronTime: '*/5 * * * *',
+    onTick: function() {
+        logPV();
+    },
+    start: true,
+    timeZone: 'Europe/Amsterdam'
+});
+logPVJob.start();
+
 console.log(`${Date.now()} RaspLogger activated`);
