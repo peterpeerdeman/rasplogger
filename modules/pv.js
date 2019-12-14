@@ -20,7 +20,7 @@ const convertTimestampToMoment = function (date, time) {
 const writeInflux = function(pvoutput) {
     const timestamp = convertTimestampToMoment(pvoutput.date, pvoutput.time);
     influxClient.write('pvstatus')
-    .time(timestamp.format('x'))
+    .time(timestamp.toformat('X'))
     .field({
         energyGeneration: pvoutput.energyGeneration,
         powerGeneration: pvoutput.powerGeneration,
@@ -33,7 +33,9 @@ const writeInflux = function(pvoutput) {
 
 const logPV = function(){
     pvoutputclient.getStatus().then(function(result) {
-        writeInflux(result);
+        if (result.time) {
+            writeInflux(result);
+        }
     });
 }
 
