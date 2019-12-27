@@ -1,5 +1,3 @@
-const Influx = require('influxdb-nodejs');
-const influxClient = new Influx('http://127.0.0.1:8086/pv');
 const pvoutput = require('pvoutput');
 const moment = require('moment');
 
@@ -17,24 +15,29 @@ const convertTimestampToMoment = function (date, time) {
     return timestamp;
 };
 
-const writeInflux = function(pvoutput) {
+const writeInflux = function(influxClient, pvoutput) {
     const timestamp = convertTimestampToMoment(pvoutput.date, pvoutput.time);
-    influxClient.write('pvstatus')
-    .time(timestamp.toformat('X'))
+    return influxClient.write('pvstatus')
+    .time(timestamp.format('X'), 's')
     .field({
-        energyGeneration: pvoutput.energyGeneration,
-        powerGeneration: pvoutput.powerGeneration,
-        temperature: pvoutput.temperature,
-        voltage: pvoutput.voltage,
+        energyGeneration: pvoutput.energyGeneration || 0,
+        powerGeneration: pvoutput.powerGeneration || 0,
+        temperature: pvoutput.temperature || undefined,
+        voltage: pvoutput.voltage || 0,
     })
-    .then(() => console.debug(`${Date.now()} pv: write success`))
+    .then(() => {
+        console.debug(`${Date.now()} pv: write success`)  
+        return true;
+    })
     .catch(err => console.error(`${Date.now()} pv: write failed ${err.message}`));
 }
 
-const logPV = function(){
-    pvoutputclient.getStatus().then(function(result) {
+const logPV = function(influx){
+    return pvoutputclient.getStatus().then(function(result) {
         if (result.time) {
-            writeInflux(result);
+            return writeInflux(influx, result);
+        } else {
+            return false;
         }
     });
 }

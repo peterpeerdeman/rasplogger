@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const CronJob = require('cron').CronJob;
+const Influx = require('influxdb-nodejs');
 
 const logTemperature =  require('./modules/temperature.js').logTemperature;
 const logTemperatureJob = new CronJob({
@@ -12,7 +13,7 @@ const logTemperatureJob = new CronJob({
     start: true,
     timeZone: 'Europe/Amsterdam'
 });
-logTemperatureJob.start();
+//logTemperatureJob.start();
 
 const logLights =  require('./modules/lights.js').logLights;
 const logLightsJob = new CronJob({
@@ -23,13 +24,15 @@ const logLightsJob = new CronJob({
     start: true,
     timeZone: 'Europe/Amsterdam'
 });
-logLightsJob.start();
+//logLightsJob.start();
 
 const logPV =  require('./modules/pv.js').logPV;
+const pvInfluxClient = new Influx('http://127.0.0.1:8086/pv');
 const logPVJob = new CronJob({
-    cronTime: '*/5 * * * *',
+//    cronTime: '*/5 * * * *',
+    cronTime: '*/5 * * * * *',
     onTick: function() {
-        logPV();
+        logPV(pvInfluxClient);
     },
     start: true,
     timeZone: 'Europe/Amsterdam'
