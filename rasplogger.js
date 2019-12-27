@@ -29,8 +29,7 @@ const logLightsJob = new CronJob({
 const logPV =  require('./modules/pv.js').logPV;
 const pvInfluxClient = new Influx('http://127.0.0.1:8086/pv');
 const logPVJob = new CronJob({
-//    cronTime: '*/5 * * * *',
-    cronTime: '*/5 * * * * *',
+    cronTime: '*/5 * * * *',
     onTick: function() {
         logPV(pvInfluxClient);
     },
