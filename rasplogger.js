@@ -38,4 +38,16 @@ const logPVJob = new CronJob({
 });
 logPVJob.start();
 
+const logThermostat =  require('./modules/thermostat.js').logThermostat;
+const thermostatInfluxClient = new Influx('http://127.0.0.1:8086/thermostat');
+const logThermostatJob = new CronJob({
+    cronTime: '*/5 * * * *',
+    onTick: function() {
+        logThermostat(thermostatInfluxClient);
+    },
+    start: true,
+    timeZone: 'Europe/Amsterdam'
+});
+logThermostatJob.start();
+
 console.log(`${Date.now()} RaspLogger activated`);
