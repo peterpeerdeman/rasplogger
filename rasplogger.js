@@ -13,7 +13,7 @@ const logTemperatureJob = new CronJob({
     start: true,
     timeZone: 'Europe/Amsterdam'
 });
-//logTemperatureJob.start();
+logTemperatureJob.start();
 
 const logLights =  require('./modules/lights.js').logLights;
 const logLightsJob = new CronJob({
@@ -24,7 +24,7 @@ const logLightsJob = new CronJob({
     start: true,
     timeZone: 'Europe/Amsterdam'
 });
-//logLightsJob.start();
+logLightsJob.start();
 
 const logPV =  require('./modules/pv.js').logPV;
 const pvInfluxClient = new Influx('http://127.0.0.1:8086/pv');
