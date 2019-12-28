@@ -50,7 +50,7 @@ const logThermostat = influxClient => {
     .then(promiseResults => {
         const [zones, weather] = promiseResults;
         return Promise.all(zones.map(zone => {
-            return tado.getZoneState(430506, zone.id)
+            return tado.getZoneState(process.env.TADO_HOME_ID, zone.id)
             .then(zoneresult => {
                 const fields = formatZone(zoneresult, weather);
                 return writeInflux(influxClient, zone, fields);
