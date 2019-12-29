@@ -53,7 +53,7 @@ logThermostatJob.start();
 const logRouter =  require('./modules/router.js').logRouter;
 const routerInfluxClient = new Influx('http://127.0.0.1:8086/router');
 const logRouterJob = new CronJob({
-    cronTime: '*/3 * * * *',
+    cronTime: '*/5 * * * *',
     onTick: function() {
         logRouter(routerInfluxClient);
     },
