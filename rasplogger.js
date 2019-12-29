@@ -50,4 +50,16 @@ const logThermostatJob = new CronJob({
 });
 logThermostatJob.start();
 
+const logRouter =  require('./modules/router.js').logRouter;
+const routerInfluxClient = new Influx('http://127.0.0.1:8086/router');
+const logRouterJob = new CronJob({
+    cronTime: '*/3 * * * *',
+    onTick: function() {
+        logRouter(routerInfluxClient);
+    },
+    start: true,
+    timeZone: 'Europe/Amsterdam'
+});
+logRouterJob.start();
+
 console.log(`${Date.now()} RaspLogger activated`);
