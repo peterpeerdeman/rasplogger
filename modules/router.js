@@ -11,7 +11,7 @@ const writeInfluxDevices = (influxClient, devices) => {
         influxClient.write('devices')
         .tag({
             name: device.name,
-            mac: device.mac,
+            mac: device.mac || undefined,
             ip: device.ip,
             port: device.port || undefined,
         })
