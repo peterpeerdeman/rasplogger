@@ -1,0 +1,8 @@
+{ access_token:
+       'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyMkJKNEMiLCJzdWIiOiIyQ05IUzMiLCJpc3MiOiJGaXRiaXQiLCJ0eXAiOiJhY2Nlc3NfdG9rZW4iLCJzY29wZXMiOiJyYWN0IHJ3ZWkgcmhyIHJudXQgcnBybyByc2xlIiwiZXhwIjoxNTc4OTgyMTc3LCJpYXQiOjE1Nzg5NTMzNzd9.rJnNaOSiQqnyuXubtp2tfafMOZcw2bNL3Xv0674HeHg',
+         expires_in: 28800,
+           refresh_token:
+              'ca955dddf7fefbb234970b9dfe0b0e4930d62dc774ba470ad267f56aaef35916',
+                scope: 'activity heartrate sleep weight nutrition profile',
+                  token_type: 'Bearer',
+                    user_id: '2CNHS3' }
