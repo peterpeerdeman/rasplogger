@@ -24,7 +24,7 @@ const convertTimestampToMoment = function (date, time) {
     let timestamp = moment(date);
     timestamp.hour(hour);
     timestamp.minute(minute);
-    timestamp.second(second);
+    timestamp.seconds(second);
     return timestamp;
 };
 
@@ -69,7 +69,7 @@ const writeInfluxSleep = (influxClient, sleep) => {
         };
 
         influxClient.write('sleep')
-        .time(moment(sleepItem.startTime).format('X', 's'))
+        .time(moment(sleepItem.startTime).format('X'), 's')
         .field(fields)
         .queue();
     }
@@ -77,7 +77,7 @@ const writeInfluxSleep = (influxClient, sleep) => {
     //summary
     const currentDate = new moment(moment().format('YYYY-MM-DD'));
     influxClient.write('sleepsummaries')
-    .time(currentDate.format('X', 's'))
+    .time(currentDate.format('X'), 's')
     .field(flatten(sleep.summary))
     .queue();
 };
@@ -99,7 +99,7 @@ const writeInfluxHeartrate = (influxClient, heartrate) => {
     for(rate of heartrate['activities-heart-intraday'].dataset) {
         const timestamp = convertTimestampToMoment(new Date(), rate.time); 
         influxClient.write('heartrate')
-        .time(timestamp.format('X', 's'))
+        .time(timestamp.format('X'), 's')
         .field({
             value: rate.value
         })
