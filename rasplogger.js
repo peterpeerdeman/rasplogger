@@ -51,11 +51,11 @@ const logThermostatJob = new CronJob({
 logThermostatJob.start();
 
 const logRouter =  require('./modules/router.js').logRouter;
-const routerInfluxClient = new Influx('http://127.0.0.1:8086/router');
+const fitbitInfluxClient = new Influx('http://127.0.0.1:8086/router');
 const logRouterJob = new CronJob({
     cronTime: '*/5 * * * *',
     onTick: function() {
-        logRouter(routerInfluxClient);
+        logRouter(fitbitInfluxClient);
     },
     start: true,
     timeZone: 'Europe/Amsterdam'
