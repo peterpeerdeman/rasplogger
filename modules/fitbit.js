@@ -1,6 +1,7 @@
 const FitbitApiClient = require("fitbit-node");
 const storage = require('node-persist');
 const moment = require('moment');
+const flatten = require('flat')
 
 const fitbit1 = new FitbitApiClient({
     clientId: process.env.FITBIT_CLIENT, 
@@ -44,6 +45,43 @@ const writeInfluxProfile = (influxClient, user) => {
     .queue();
 };
 
+const writeInfluxSleep = (influxClient, sleep) => {
+    // sleeps
+    for (sleepItem of sleep.sleep) {
+        const {
+            duration,
+            efficiency,
+            minutesAFterWakeup,
+            minutesAsleep,
+            minutesAwake,
+            minutesToFallAsleep,
+            timeInBed
+        } = sleepItem;
+
+        const fields = {
+            duration,
+            efficiency,
+            minutesAFterWakeup,
+            minutesAsleep,
+            minutesAwake,
+            minutesToFallAsleep,
+            timeInBed,
+        };
+
+        influxClient.write('sleep')
+        .time(moment(sleepItem.startTime).format('X', 's'))
+        .field(fields)
+        .queue();
+    }
+
+    //summary
+    const currentDate = new moment(moment().format('YYYY-MM-DD'));
+    influxClient.write('sleepsummaries')
+    .time(currentDate.format('X', 's'))
+    .field(flatten(sleep.summary))
+    .queue();
+};
+
 const writeInfluxHeartrate = (influxClient, heartrate) => {
     if(!heartrate['activities-heart']) return;
     if(!heartrate['activities-heart-intraday']) return;
@@ -67,13 +105,12 @@ const writeInfluxHeartrate = (influxClient, heartrate) => {
         })
         .queue();
     }
-
 };
 
 const writeInflux = (influxClient, profile, heartrate, sleep) => {
-     writeInfluxProfile(influxClient, profile[0].user);
-     writeInfluxHeartrate(influxClient, heartrate[0]);
-    //writeInfluxSleep(influxClient, sleep[0]);
+    writeInfluxProfile(influxClient, profile[0].user);
+    writeInfluxHeartrate(influxClient, heartrate[0]);
+    writeInfluxSleep(influxClient, sleep[0]);
 
     influxClient.syncWrite()
     .then(() => console.debug(`${Date.now()} fitbit: influx write point success`))
@@ -119,19 +156,10 @@ const logFitbit = async influxClient => {
 
     await checkTokenAndRefreshIfNeeded(tokens);
     
-    //TODO: get proper sleep date
-    // fitbit12.get('/sleep/date/[date].json', tokens.access_token).then(results => {
-    //     console.log(results[0]['activities-heart']);
-    // }).catch(err => {
-    //     console.log(err);
-    // });
-
-    //TODO remove debugging
-    //return;
-    
     const promises = [
         fitbit1.get('/profile.json', tokens.access_token),
         fitbit1.get('/activities/heart/date/today/1d/1min.json', tokens.access_token),
+        fitbit12.get(`/sleep/date/${moment().format('YYYY-MM-DD')}.json`, tokens.access_token),
     ];
     return Promise.all(promises)
     .then((results) => {
