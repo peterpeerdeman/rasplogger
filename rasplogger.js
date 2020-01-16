@@ -62,4 +62,16 @@ const logRouterJob = new CronJob({
 });
 logRouterJob.start();
 
+const logFitbit = require('./modules/fitbit.js').logFitbit;
+const routerInfluxClient = new Influx('http://127.0.0.1:8086/fitbit');
+const logFitbitJob = new CronJob({
+    cronTime: '*/5 * * * *',
+    onTick: function() {
+        logFitbit(routerInfluxClient);
+    },
+    start: true,
+    timeZone: 'Europe/Amsterdam'
+});
+logFitbitJob.start();
+
 console.log(`${Date.now()} RaspLogger activated`);
