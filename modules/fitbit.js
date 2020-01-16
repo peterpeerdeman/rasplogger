@@ -1,15 +1,31 @@
 const FitbitApiClient = require("fitbit-node");
+const storage = require('node-persist');
+const moment = require('moment');
 
 const fitbit1 = new FitbitApiClient({
     clientId: process.env.FITBIT_CLIENT, 
     clientSecret: process.env.FITBIT_SECRET, 
     apiVersion: "1"
 });
+const fitbit11 = new FitbitApiClient({
+    clientId: process.env.FITBIT_CLIENT, 
+    clientSecret: process.env.FITBIT_SECRET, 
+    apiVersion: "1.1"
+});
 const fitbit12 = new FitbitApiClient({
     clientId: process.env.FITBIT_CLIENT, 
     clientSecret: process.env.FITBIT_SECRET, 
     apiVersion: "1.2"
 });
+
+const convertTimestampToMoment = function (date, time) {
+    const [hour, minute, second] = time.split(':');
+    let timestamp = moment(date);
+    timestamp.hour(hour);
+    timestamp.minute(minute);
+    timestamp.second(second);
+    return timestamp;
+};
 
 const writeInfluxProfile = (influxClient, user) => {
     const fields = {
@@ -20,6 +36,7 @@ const writeInfluxProfile = (influxClient, user) => {
         strideLengthRunning: user.strideLengthRunning,
         strideLengthWalking: user.strideLengthWalking,
     };
+
     influxClient.write('user')
     .tag('encodedId', user.encodedId)
     .tag('fullName', user.fullName)
@@ -32,21 +49,19 @@ const writeInfluxHeartrate = (influxClient, heartrate) => {
     if(!heartrate['activities-heart-intraday']) return;
 
     //zones
-    for(zone in heartrate['activities-heart'][0].heartRateZones) {
-        const {zoneName, ...zonevalues} = zone;
-
-        console.log(zoneName, zoneValues);
-
+    for(zone of heartrate['activities-heart'][0].value.heartRateZones) {
+        const {name, ...zoneValues} = zone;
         influxClient.write('heartratezones')
-        .tag('zone', zoneName)
+        .tag('zone', name)
         .field(zoneValues)
         .queue();
     }
-    return;
 
     //heartrates
-    for(rate in heartrate['activities-heart-intraday'].dataset) {
+    for(rate of heartrate['activities-heart-intraday'].dataset) {
+        const timestamp = convertTimestampToMoment(new Date(), rate.time); 
         influxClient.write('heartrate')
+        .time(timestamp.format('X', 's'))
         .field({
             value: rate.value
         })
@@ -55,11 +70,11 @@ const writeInfluxHeartrate = (influxClient, heartrate) => {
 
 };
 
-const writeInflux = (influxClient, profile, heartrate, overview, nas) => {
-    writeInfluxProfile(influxClient, profile[0].user);
-    writeInfluxHeartrate(influxClient, heartrate);
-    // writeInfluxSleep(influxClient, steps);
-    //
+const writeInflux = (influxClient, profile, heartrate, sleep) => {
+     writeInfluxProfile(influxClient, profile[0].user);
+     writeInfluxHeartrate(influxClient, heartrate[0]);
+    //writeInfluxSleep(influxClient, sleep[0]);
+
     influxClient.syncWrite()
     .then(() => console.debug(`${Date.now()} fitbit: influx write point success`))
     .catch((error) => console.debug(`${Date.now()} fitbit: write failed ${error}`));
@@ -71,29 +86,52 @@ const printCallbackUrl = () => {
     console.log(callback);
 };
 
-const translateCode = () => {
-    fitbit1.getAccessToken('66137492dc9983de64169fa61b28c2d8c056817e', 'http://localhost:8553').then(result => {
-        console.log(result);
+const translateCode = (code) => {
+    return fitbit1.getAccessToken(code, 'http://localhost:8553').then(result => {
+        return result;
     });
 };
 
+const checkTokenAndRefreshIfNeeded = async (tokens) => {
+    const result = await fitbit11.post('/oauth2/introspect', tokens.access_token, {token: tokens.access_token}, false);
+    if (result[0] && !result[0].active) {
+        console.log(`${Date.now()} fitbit: refreshing access token`);
+        await fitbit1.refreshAccessToken(tokens.access_token, tokens.refresh_token);
+        await storage.setItem('fitbit-tokens', results);
+        return false;
+    } else {
+        return true;
+    }
+};
+
 const logFitbit = async influxClient => {
-    // printCallbackUrl();
-    // translateCode();
+    const storagestatus = await storage.init();
+    const tokens = await storage.getItem('fitbit-tokens');
+
+    if (!tokens) {
+        console.log(`${Date.now()} fitbit: access_tokens not set, not writing data`);
+        printCallbackUrl();
+        // translateCode('1b909a06cfcff95459fa5aab55a2e8cc369259ad').then(function(result) {
+        //     storage.setItem('fitbit-tokens', result);
+        // });
+        // return;
+    }
+
+    await checkTokenAndRefreshIfNeeded(tokens);
     
     //TODO: get proper sleep date
-    fitbit12.get('/sleep/date/[date].json', process.env.FITBIT_TOKEN).then(results => {
-        console.log(results[0]['activities-heart']);
-    }).catch(err => {
-        console.log(err);
-    });
+    // fitbit12.get('/sleep/date/[date].json', tokens.access_token).then(results => {
+    //     console.log(results[0]['activities-heart']);
+    // }).catch(err => {
+    //     console.log(err);
+    // });
 
     //TODO remove debugging
-    return;
+    //return;
     
     const promises = [
-        fitbit1.get('/profile.json', process.env.FITBIT_TOKEN),
-        fitbit1.get('/activities/heart/date/today/1d/1min.json', process.env.FITBIT_TOKEN),
+        fitbit1.get('/profile.json', tokens.access_token),
+        fitbit1.get('/activities/heart/date/today/1d/1min.json', tokens.access_token),
     ];
     return Promise.all(promises)
     .then((results) => {

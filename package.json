@@ -12,6 +12,7 @@
     "influxdb-nodejs": "^3.1.0",
     "moment": "^2.24.0",
     "node-hue-api": "^3.4.3",
+    "node-persist": "^3.0.5",
     "node-tado-client": "^0.5.0",
     "pvoutput": "github:peterpeerdeman/pvoutput#master",
     "request": "^2.65.0"
