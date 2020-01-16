@@ -7,10 +7,13 @@
     "axios": "^0.19.0",
     "cron": "^1.2.1",
     "dotenv": "^4.0.0",
+    "fitbit-node": "^2.2.0",
+    "flat": "^5.0.0",
     "fritznode": "github:peterpeerdeman/fritznode#master",
     "influxdb-nodejs": "^3.1.0",
     "moment": "^2.24.0",
     "node-hue-api": "^3.4.3",
+    "node-persist": "^3.0.5",
     "node-tado-client": "^0.5.0",
     "pvoutput": "github:peterpeerdeman/pvoutput#master",
     "request": "^2.65.0"
