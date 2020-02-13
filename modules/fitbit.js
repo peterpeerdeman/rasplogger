@@ -133,8 +133,8 @@ const checkTokenAndRefreshIfNeeded = async (tokens) => {
     const result = await fitbit11.post('/oauth2/introspect', tokens.access_token, {token: tokens.access_token}, false);
     if (result[0] && !result[0].active) {
         console.log(`${Date.now()} fitbit: refreshing access token`);
-        await fitbit1.refreshAccessToken(tokens.access_token, tokens.refresh_token);
-        await storage.setItem('fitbit-tokens', results);
+        const refreshedToken = await fitbit1.refreshAccessToken(tokens.access_token, tokens.refresh_token);
+        await storage.setItem('fitbit-tokens', refresh_token);
         return false;
     } else {
         return true;
@@ -147,8 +147,9 @@ const logFitbit = async influxClient => {
 
     if (!tokens) {
         console.log(`${Date.now()} fitbit: access_tokens not set, not writing data`);
-        printCallbackUrl();
-        // translateCode('1b909a06cfcff95459fa5aab55a2e8cc369259ad').then(function(result) {
+        return;
+        // printCallbackUrl();
+        // translateCode('cb66d319df23d67d6041532c0811ad8cf016e4ff').then(function(result) {
         //     storage.setItem('fitbit-tokens', result);
         // });
         // return;
