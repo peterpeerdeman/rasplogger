@@ -134,7 +134,7 @@ const checkTokenAndRefreshIfNeeded = async (tokens) => {
     if (result[0] && !result[0].active) {
         console.log(`${Date.now()} fitbit: refreshing access token`);
         const refreshedToken = await fitbit1.refreshAccessToken(tokens.access_token, tokens.refresh_token);
-        await storage.setItem('fitbit-tokens', refresh_token);
+        await storage.setItem('fitbit-tokens', refreshedToken);
         return false;
     } else {
         return true;
