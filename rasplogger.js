@@ -74,4 +74,16 @@ const logFitbitJob = new CronJob({
 });
 logFitbitJob.start();
 
+const logParking = require('./modules/parking.js').logParking;
+const parkingInfluxClient = new Influx('http://127.0.0.1:8086/parking');
+const logParkingJob = new CronJob({
+    cronTime: '*/5 * * * *',
+    onTick: function() {
+        logParking(parkingInfluxClient);
+    },
+    start: true,
+    timeZone: 'Europe/Amsterdam'
+});
+logParkingJob.start();
+
 console.log(`${Date.now()} RaspLogger activated`);
