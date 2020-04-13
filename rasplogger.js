@@ -86,4 +86,16 @@ const logParkingJob = new CronJob({
 });
 logParkingJob.start();
 
+const logDestiny = require('./modules/destiny.js').logDestiny;
+const destinyInfluxClient = new Influx('http://127.0.0.1:8086/destiny');
+const logDestinyJob = new CronJob({
+    cronTime: '*/5 * * * *',
+    onTick: function() {
+        logDestiny(destinyInfluxClient);
+    },
+    start: true,
+    timeZone: 'Europe/Amsterdam'
+});
+logDestinyJob.start();
+
 console.log(`${Date.now()} RaspLogger activated`);
