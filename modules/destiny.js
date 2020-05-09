@@ -186,11 +186,13 @@ const writeInfluxGroupMembersStatus = (influxClient, status) => {
 
 const writeInfluxGroupMembersCharacters = (influxClient, characters) => {
     for(character of characters) {
-        influxClient.write('clanmemberscharacters')
-        .tag('displayName', character.displayName)
-        .tag('classType', character.classType)
-        .field(character)
-        .queue();
+        if(character) {
+            influxClient.write('clanmemberscharacters')
+            .tag('displayName', character.displayName)
+            .tag('classType', character.classType)
+            .field(character)
+            .queue();
+        }
     }
 };
 
