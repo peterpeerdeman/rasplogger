@@ -8,6 +8,13 @@ const destiny = new Destiny2API({
     key: process.env.BUNGIE_API
 });
 
+const CLASSTYPES = {
+    0: 'Titan',
+    1: 'Hunter',
+    2: 'Warlock',
+    3: 'Unknown',
+};
+
 const GAMETYPES = {
     0: 'None',
     2: 'Story',
@@ -91,25 +98,34 @@ const GAMETYPES = {
 
 // Looking up my character: charId: 2305843009278477570
 // 205 gives inventory
-
-const writeInfluxCharacter = (influxClient, character) => {
+const transformCharacterStats = (character) => {
     const {
         dateLastPlayed,
         light,
         minutesPlayedThisSession,
         minutesPlayedTotal,
+        classType,
+        characterId,
     } = character.character.data;
 
     const fields = {
+        classType,
         dateLastPlayed,
         light,
         minutesPlayedThisSession,
         minutesPlayedTotal,
+        characterId,
     };
 
+    fields.classType = CLASSTYPES[fields.classType];
     fields.minutesPlayedThisSession = parseInt(fields.minutesPlayedThisSession);
     fields.minutesPlayedTotal = parseInt(fields.minutesPlayedTotal);
 
+    return fields;
+};
+
+const writeInfluxCharacter = (influxClient, character) => {
+    const fields = transformCharacterStats(character);
     influxClient.write('character')
     .field(fields)
     .queue();
@@ -154,17 +170,68 @@ const writeInfluxAccount = (influxClient, account) => {
     .queue();
 };
 
-const writeInflux = (influxClient, character, clan, weapons, account) => {
+const writeInfluxGroupMembersStatus = (influxClient, status) => {
+    for(member of status.results) {
+        const fields = {
+            isOnline: member.isOnline,
+            memberType: member.memberType,
+        };
+
+        influxClient.write('clanmemberstatus')
+        .tag('displayName', member.destinyUserInfo.displayName)
+        .field(fields)
+        .queue();
+    }
+};
+
+const writeInfluxGroupMembersCharacters = (influxClient, characters) => {
+    for(character of characters) {
+        influxClient.write('clanmemberscharacters')
+        .tag('displayName', character.displayName)
+        .tag('classType', character.classType)
+        .field(character)
+        .queue();
+    }
+};
+
+const writeInflux = (influxClient, character, clan, weapons, account, groupMembers, groupMembersStats) => {
     writeInfluxCharacter(influxClient, character.Response);
     writeInfluxClan(influxClient, clan.Response);
     writeInfluxWeapons(influxClient, weapons.Response);
     writeInfluxAccount(influxClient, account.Response);
+    writeInfluxGroupMembersStatus(influxClient, groupMembers.Response);
+    writeInfluxGroupMembersCharacters(influxClient, groupMembersStats.flat().flat());
 
     influxClient.syncWrite()
     .then(() => console.debug(`${Date.now()} destiny: influx write point success`))
     .catch((error) => console.debug(`${Date.now()} destiny: write failed ${error}`));
 };
 
+const getGroupMembersStats = async () => {
+    return destiny.getGroupMembers('3896551').then(function(response) {
+        const members = response.Response.results;
+        return Promise.all(members.map(function(member) {
+            const memberId = member.destinyUserInfo.membershipId;
+            return destiny.getProfile(1, memberId, [100]).then(response => {
+                if (!response.Response) {
+                    return undefined;
+                };
+                const characterIds = response.Response.profile.data.characterIds;
+                const displayName = response.Response.profile.data.userInfo.displayName;
+                return Promise.all(characterIds.map(function(characterId) {
+                    return destiny.getCharacter(1, memberId, characterId, [200, 205]).then(function(response) {
+                        const characterResponse = response.Response;
+                        const fields = transformCharacterStats(characterResponse);
+                        return {
+                            displayName: displayName,
+                            ...fields
+                        };
+                    });
+                }));
+            });
+        }));
+    });
+};
 
 const logDestiny = async influxClient => {
     const promises = [
@@ -172,10 +239,15 @@ const logDestiny = async influxClient => {
         destiny.getClanAggregateStats('3896551'),
         destiny.getHistoricalStats(1, '4611686018431927918', '2305843009513035254', { modes: [5], groups: [2] }), // weapons
         destiny.getHistoricalStatsForAccount(1, '4611686018431927918'), //account
+        destiny.getGroupMembers('3896551'),
+        getGroupMembersStats()
     ];
     return Promise.all(promises)
     .then((results) => {
         return writeInflux(influxClient, ...results);
+    })
+    .catch(err => {
+        console.error(`Error: ${err}`);
     });
 };
 
