@@ -214,14 +214,12 @@ const getGroupMembersStats = async () => {
         const members = response.Response.results;
         return Promise.all(members.map(function(member) {
             const memberId = member.destinyUserInfo.membershipId;
-            return destiny.getProfile(1, memberId, [100]).then(response => {
-                if (!response.Response) {
-                    return undefined;
-                };
+            const membershipType = member.destinyUserInfo.membershipType;
+            return destiny.getProfile(membershipType, memberId, [100]).then(response => {
                 const characterIds = response.Response.profile.data.characterIds;
                 const displayName = response.Response.profile.data.userInfo.displayName;
                 return Promise.all(characterIds.map(function(characterId) {
-                    return destiny.getCharacter(1, memberId, characterId, [200, 205]).then(function(response) {
+                    return destiny.getCharacter(membershipType, memberId, characterId, [200, 205]).then(function(response) {
                         const characterResponse = response.Response;
                         const fields = transformCharacterStats(characterResponse);
                         return {
