@@ -89,7 +89,7 @@ logParkingJob.start();
 const logDestiny = require('./modules/destiny.js').logDestiny;
 const destinyInfluxClient = new Influx('http://127.0.0.1:8086/destiny');
 const logDestinyJob = new CronJob({
-    cronTime: '*/5 * * * *',
+    cronTime: '*/30 * * * *',
     onTick: function() {
         logDestiny(destinyInfluxClient);
     },
