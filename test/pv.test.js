@@ -7,7 +7,7 @@ influxClient = new Influx('http://localhost:8086/pv');
 process.env.PVOUTPUT_APIKEY = 'apikey';
 process.env.PVOUTPUT_SYSTEMID = '1234';
 
-const pv = require('../modules/pv.js');
+const logPV = require('../modules/pv.js');
 
 const pvoutput_sunny_response = fs.readFileSync('test/response.pvoutput.sunny','utf8');
 const pvoutput_cloudy_response = fs.readFileSync('test/response.pvoutput.cloudy','utf8');
@@ -24,10 +24,10 @@ describe('pvoutput tests', () => {
             })
             .reply(200, pvoutput_sunny_response);
 
-        pv.logPV(influxClient).then(response => {
+        logPV(influxClient).then(response => {
             expect(response).to.equal(true);
             done();
-        })
+        });
     }).timeout(10000);
 
     it('Should save cloudy data', (done) => {
@@ -39,10 +39,10 @@ describe('pvoutput tests', () => {
 
             })
             .reply(200, pvoutput_cloudy_response);
-        pv.logPV(influxClient).then(response => {
+        logPV(influxClient).then(response => {
             expect(response).to.equal(true);
             done();
-        })
+        });
     }).timeout(10000);
 
     it('Should not fail when there is no timestamp in the pv result', (done) => {
@@ -54,9 +54,9 @@ describe('pvoutput tests', () => {
 
             })
             .reply(200, pvoutput_notime_response);
-        pv.logPV(influxClient).then(response => {
+        logPV(influxClient).then(response => {
             expect(response).to.equal(false);
             done();
-        })
+        });
     }).timeout(10000);
 });
