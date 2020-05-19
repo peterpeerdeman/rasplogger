@@ -1,7 +1,7 @@
 const FitbitApiClient = require("fitbit-node");
 const storage = require('node-persist');
 const moment = require('moment');
-const flatten = require('flat')
+const flatten = require('flat');
 
 const fitbit1 = new FitbitApiClient({
     clientId: process.env.FITBIT_CLIENT, 
@@ -29,6 +29,9 @@ const convertTimestampToMoment = function (date, time) {
 };
 
 const writeInfluxProfile = (influxClient, user) => {
+    if (!user) {
+        throw new Error('user was not defined');
+    };
     const fields = {
         height: user.height,
         weight: user.weight,
@@ -46,6 +49,9 @@ const writeInfluxProfile = (influxClient, user) => {
 };
 
 const writeInfluxSleep = (influxClient, sleep) => {
+    if(!sleep.sleep) {
+        throw new Error('sleepdata was not defined');
+    }
     // sleeps
     for (sleepItem of sleep.sleep) {
         const {
@@ -155,17 +161,27 @@ const logFitbit = async influxClient => {
         // return;
     }
 
-    await checkTokenAndRefreshIfNeeded(tokens);
-    
-    const promises = [
-        fitbit1.get('/profile.json', tokens.access_token),
-        fitbit1.get('/activities/heart/date/today/1d/1min.json', tokens.access_token),
-        fitbit12.get(`/sleep/date/${moment().format('YYYY-MM-DD')}.json`, tokens.access_token),
-    ];
-    return Promise.all(promises)
-    .then((results) => {
-        return writeInflux(influxClient, ...results);
-    });
+
+    try {
+        await checkTokenAndRefreshIfNeeded(tokens);
+    } catch (error) {
+        return console.debug(`${Date.now()} fitbit: retrieve accesstoken failed ${error}`);
+    }
+
+
+    try {
+      const promises = [
+          fitbit1.get('/profile.json', tokens.access_token),
+          fitbit1.get('/activities/heart/date/today/1d/1min.json', tokens.access_token),
+          fitbit12.get(`/sleep/date/${moment().format('YYYY-MM-DD')}.json`, tokens.access_token),
+      ];
+      return Promise.all(promises)
+      .then((results) => {
+          return writeInflux(influxClient, ...results);
+      });
+    } catch (error) {
+        return console.debug(`${Date.now()} fitbit: retrieve fitbit data failed ${error}`);
+    }
 };
 
 module.exports = logFitbit;
