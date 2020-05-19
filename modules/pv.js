@@ -26,11 +26,11 @@ const writeInflux = function(influxClient, pvoutput) {
         voltage: pvoutput.voltage || 0,
     })
     .then(() => {
-        console.debug(`${Date.now()} pv: write success`)  
+        console.debug(`${Date.now()} pv: write success`);
         return true;
     })
     .catch(err => console.error(`${Date.now()} pv: write failed ${err.message}`));
-}
+};
 
 const logPV = function(influx){
     return pvoutputclient.getStatus().then(function(result) {
@@ -40,6 +40,6 @@ const logPV = function(influx){
             return false;
         }
     });
-}
+};
 
 module.exports = logPV;
