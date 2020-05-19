@@ -251,4 +251,4 @@ const logDestiny = async influxClient => {
     });
 };
 
-exports.logDestiny = logDestiny;
+module.exports = logDestiny;

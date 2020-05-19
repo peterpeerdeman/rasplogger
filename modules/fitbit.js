@@ -168,4 +168,4 @@ const logFitbit = async influxClient => {
     });
 };
 
-exports.logFitbit = logFitbit;
+module.exports = logFitbit;

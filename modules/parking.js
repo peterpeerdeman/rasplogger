@@ -31,4 +31,4 @@ const logParking = influxClient => {
     .catch(err => console.log(err));
 };
 
-exports.logParking = logParking;
+module.exports = logParking;
