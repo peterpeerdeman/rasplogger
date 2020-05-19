@@ -60,4 +60,4 @@ const logThermostat = influxClient => {
     .catch(err => console.log(err));
 };
 
-exports.logThermostat = logThermostat;
+module.exports = logThermostat;

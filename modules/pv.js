@@ -42,4 +42,4 @@ const logPV = function(influx){
     });
 }
 
-exports.logPV = logPV;
+module.exports = logPV;

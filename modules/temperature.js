@@ -31,4 +31,4 @@ const logTemperature = async url => {
     }
 }
 
-exports.logTemperature = logTemperature;
+module.exports = logTemperature;

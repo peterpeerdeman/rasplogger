@@ -63,4 +63,4 @@ const logRouter = async influxClient => {
     });
 };
 
-exports.logRouter = logRouter;
+module.exports = logRouter;

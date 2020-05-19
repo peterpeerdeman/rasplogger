@@ -41,4 +41,4 @@ const logLights = function(){
     });
 }
 
-exports.logLights = logLights;
+module.exports = logLights;
