@@ -1,8 +1,6 @@
-const Influx = require('influxdb-nodejs');
-const influxClient = new Influx('http://127.0.0.1:8086/huelights');
 const v3 = require('node-hue-api').v3;
 
-const writeInflux = function(lights) {
+const writeInflux = function(influxClient, lights) {
     let influxWrites = Object.values(lights).map(function(dataset) {
         return new Promise((resolve) => {
             influxClient.write('lightstatus')
@@ -22,23 +20,23 @@ const writeInflux = function(lights) {
                 hue: dataset._rawData.state.hue,
             }).queue();
             resolve();
-        })
-    })
-    Promise.all(influxWrites).then(() => {
-        influxClient.syncWrite()
+        });
+    });
+    return Promise.all(influxWrites).then(() => {
+        return influxClient.syncWrite()
         .then(() => console.debug(`${Date.now()} lights: sync write queue success`))
         .catch(err => console.error(`${Date.now()} lights: sync write queue failed ${err.message}`));
     });
-}
+};
 
-const logLights = function(){
-    v3.api.createLocal(process.env.LIGHTS_HOST).connect(process.env.LIGHTS_USERNAME)
+const logLights = async influxClient => {
+    return v3.api.createLocal(process.env.LIGHTS_HOST).connect(process.env.LIGHTS_USERNAME)
     .then(api => {
-        return api.lights.getAll()
+        return api.lights.getAll();
     })
     .then(allLights => {
-        writeInflux(allLights);
+        return writeInflux(influxClient, allLights);
     });
-}
+};
 
 module.exports = logLights;
