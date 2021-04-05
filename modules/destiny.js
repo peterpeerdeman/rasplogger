@@ -1,6 +1,3 @@
-// These examples are temporary
-// https://www.bungie.net/en/Help/Article/45481
-
 const Destiny2API = require('node-destiny-2');
 const fs = require('fs');
 
@@ -124,13 +121,6 @@ const transformCharacterStats = (character) => {
     return fields;
 };
 
-const writeInfluxCharacter = (influxClient, character) => {
-    const fields = transformCharacterStats(character);
-    influxClient.write('character')
-    .field(fields)
-    .queue();
-};
-
 const writeInfluxClan = (influxClient, clan) => {
     const gamemodes = clan.reduce(function(result, clanstat, index) { 
         const gametype = GAMETYPES[clanstat.mode];
@@ -145,29 +135,6 @@ const writeInfluxClan = (influxClient, clan) => {
         .field(value)
         .queue();
     }
-};
-
-const writeInfluxWeapons = (influxClient, weapons) => {
-    const fields = Object.entries(weapons.allPvP.allTime).reduce(function(result, [key, value], index) {
-        result[key] = value.basic.value;
-        return result;
-    }, {});
-
-    influxClient.write('weapons')
-    .tag('gametype', 'pvp')
-    .field(fields)
-    .queue();
-};
-
-const writeInfluxAccount = (influxClient, account) => {
-    const fields = Object.entries(account.mergedAllCharacters.merged.allTime).reduce(function(result, [key, value], index) {
-        result[key] = value.basic.value;
-        return result;
-    }, {});
-
-    influxClient.write('account')
-    .field(fields)
-    .queue();
 };
 
 const writeInfluxGroupMembersStatus = (influxClient, status) => {
@@ -196,11 +163,9 @@ const writeInfluxGroupMembersCharacters = (influxClient, characters) => {
     }
 };
 
-const writeInflux = (influxClient, character, clan, weapons, account, groupMembers, groupMembersStats) => {
-    writeInfluxCharacter(influxClient, character.Response);
+//const writeInflux = (influxClient, character, clan, weapons, account, groupMembers, groupMembersStats) => {
+const writeInflux = (influxClient, clan, groupMembers, groupMembersStats) => {
     writeInfluxClan(influxClient, clan.Response);
-    writeInfluxWeapons(influxClient, weapons.Response);
-    writeInfluxAccount(influxClient, account.Response);
     writeInfluxGroupMembersStatus(influxClient, groupMembers.Response);
     writeInfluxGroupMembersCharacters(influxClient, groupMembersStats.flat().flat());
 
@@ -209,8 +174,8 @@ const writeInflux = (influxClient, character, clan, weapons, account, groupMembe
     .catch((error) => console.debug(`${Date.now()} destiny: write failed ${error}`));
 };
 
-const getGroupMembersStats = async () => {
-    return destiny.getGroupMembers('3997507').then(function(response) {
+const getGroupMembersStats = async (clanId) => {
+    return destiny.getGroupMembers(clanId).then(function(response) {
         const members = response.Response.results;
         return Promise.all(members.map(function(member) {
             const memberId = member.destinyUserInfo.membershipId;
@@ -234,17 +199,16 @@ const getGroupMembersStats = async () => {
 };
 
 const logDestiny = async influxClient => {
+    const clanId = process.env.BUNGIE_CLAN_ID;
     const promises = [
-        destiny.getCharacter(1, '4611686018431927918', '2305843009513035254', [200, 205]),
-        destiny.getClanAggregateStats('3997507'),
-        destiny.getHistoricalStats(1, '4611686018431927918', '2305843009513035254', { modes: [5], groups: [2] }), // weapons
-        destiny.getHistoricalStatsForAccount(1, '4611686018431927918'), //account
-        destiny.getGroupMembers('3997507'),
-        getGroupMembersStats()
+        destiny.getClanAggregateStats(clanId),
+        destiny.getGroupMembers(clanId),
+        getGroupMembersStats(clanId)
     ];
     return Promise.all(promises)
     .then((results) => {
-        return writeInflux(influxClient, ...results);
+      console.log('end');
+      //return writeInflux(influxClient, ...results);
     })
     .catch(err => {
         console.error(`Error: ${err}`);
