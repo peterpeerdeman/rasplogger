@@ -68,3 +68,10 @@ start all loggers through cron at the same time (-u is used to specify base infl
 ```
 node rasplogger all -u http://localhost:8086
 ```
+
+## grafana dashboards
+
+you can use the following grafana dashboard exports to visualise the data collected by rasplogger
+
+![pv dashboard](grafana-dashboards/pv-output.png)
+[PV Output dashboard json export for Grafana 6.7.3](grafana-dashboards/pv-output.json)
