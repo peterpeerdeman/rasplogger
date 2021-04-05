@@ -210,7 +210,7 @@ const writeInflux = (influxClient, character, clan, weapons, account, groupMembe
 };
 
 const getGroupMembersStats = async () => {
-    return destiny.getGroupMembers('3896551').then(function(response) {
+    return destiny.getGroupMembers('3997507').then(function(response) {
         const members = response.Response.results;
         return Promise.all(members.map(function(member) {
             const memberId = member.destinyUserInfo.membershipId;
@@ -236,10 +236,10 @@ const getGroupMembersStats = async () => {
 const logDestiny = async influxClient => {
     const promises = [
         destiny.getCharacter(1, '4611686018431927918', '2305843009513035254', [200, 205]),
-        destiny.getClanAggregateStats('3896551'),
+        destiny.getClanAggregateStats('3997507'),
         destiny.getHistoricalStats(1, '4611686018431927918', '2305843009513035254', { modes: [5], groups: [2] }), // weapons
         destiny.getHistoricalStatsForAccount(1, '4611686018431927918'), //account
-        destiny.getGroupMembers('3896551'),
+        destiny.getGroupMembers('3997507'),
         getGroupMembersStats()
     ];
     return Promise.all(promises)
