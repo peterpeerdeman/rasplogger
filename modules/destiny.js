@@ -1,6 +1,3 @@
-// These examples are temporary
-// https://www.bungie.net/en/Help/Article/45481
-
 const Destiny2API = require('node-destiny-2');
 const fs = require('fs');
 
@@ -95,10 +92,19 @@ const GAMETYPES = {
     84: 'TrialsOfOsiris',
 };
 
+let hashes = {};
 
 // Looking up my character: charId: 2305843009278477570
 // 205 gives inventory
 const transformCharacterStats = (character) => {
+    const gloryRank = character.progressions.data.progressions['2000925172'].currentProgress;
+    const valorRank = character.progressions.data.progressions['2626549951'].currentProgress;
+    const infamyRank = character.progressions.data.progressions['2772425241'].currentProgress;
+
+    const rewardProgressionRank = character.progressions.data.progressions[hashes.rewardProgressionHash].level;
+    const prestigeProgressionRank = character.progressions.data.progressions[hashes.prestigeProgressionHash].level;
+    const seasonRank = rewardProgressionRank + prestigeProgressionRank;
+
     const {
         dateLastPlayed,
         light,
@@ -115,6 +121,12 @@ const transformCharacterStats = (character) => {
         minutesPlayedThisSession,
         minutesPlayedTotal,
         characterId,
+        gloryRank,
+        valorRank,
+        infamyRank,
+        rewardProgressionRank,
+        prestigeProgressionRank,
+        seasonRank,
     };
 
     fields.classType = CLASSTYPES[fields.classType];
@@ -122,13 +134,6 @@ const transformCharacterStats = (character) => {
     fields.minutesPlayedTotal = parseInt(fields.minutesPlayedTotal);
 
     return fields;
-};
-
-const writeInfluxCharacter = (influxClient, character) => {
-    const fields = transformCharacterStats(character);
-    influxClient.write('character')
-    .field(fields)
-    .queue();
 };
 
 const writeInfluxClan = (influxClient, clan) => {
@@ -145,29 +150,6 @@ const writeInfluxClan = (influxClient, clan) => {
         .field(value)
         .queue();
     }
-};
-
-const writeInfluxWeapons = (influxClient, weapons) => {
-    const fields = Object.entries(weapons.allPvP.allTime).reduce(function(result, [key, value], index) {
-        result[key] = value.basic.value;
-        return result;
-    }, {});
-
-    influxClient.write('weapons')
-    .tag('gametype', 'pvp')
-    .field(fields)
-    .queue();
-};
-
-const writeInfluxAccount = (influxClient, account) => {
-    const fields = Object.entries(account.mergedAllCharacters.merged.allTime).reduce(function(result, [key, value], index) {
-        result[key] = value.basic.value;
-        return result;
-    }, {});
-
-    influxClient.write('account')
-    .field(fields)
-    .queue();
 };
 
 const writeInfluxGroupMembersStatus = (influxClient, status) => {
@@ -196,11 +178,8 @@ const writeInfluxGroupMembersCharacters = (influxClient, characters) => {
     }
 };
 
-const writeInflux = (influxClient, character, clan, weapons, account, groupMembers, groupMembersStats) => {
-    writeInfluxCharacter(influxClient, character.Response);
+const writeInflux = (influxClient, clan, groupMembers, groupMembersStats) => {
     writeInfluxClan(influxClient, clan.Response);
-    writeInfluxWeapons(influxClient, weapons.Response);
-    writeInfluxAccount(influxClient, account.Response);
     writeInfluxGroupMembersStatus(influxClient, groupMembers.Response);
     writeInfluxGroupMembersCharacters(influxClient, groupMembersStats.flat().flat());
 
@@ -209,8 +188,8 @@ const writeInflux = (influxClient, character, clan, weapons, account, groupMembe
     .catch((error) => console.debug(`${Date.now()} destiny: write failed ${error}`));
 };
 
-const getGroupMembersStats = async () => {
-    return destiny.getGroupMembers('3997507').then(function(response) {
+const getGroupMembersStats = async (clanId) => {
+    return destiny.getGroupMembers(clanId).then(function(response) {
         const members = response.Response.results;
         return Promise.all(members.map(function(member) {
             const memberId = member.destinyUserInfo.membershipId;
@@ -218,8 +197,12 @@ const getGroupMembersStats = async () => {
             return destiny.getProfile(membershipType, memberId, [100]).then(response => {
                 const characterIds = response.Response.profile.data.characterIds;
                 const displayName = response.Response.profile.data.userInfo.displayName;
+
                 return Promise.all(characterIds.map(function(characterId) {
-                    return destiny.getCharacter(membershipType, memberId, characterId, [200, 205]).then(function(response) {
+                  // Destiny Component Types: https://bungie-net.github.io/multi/schema_Destiny-DestinyComponentType.html#schema_Destiny-DestinyComponentType
+                  // 200 Characters
+                  // 202 CharacterProgressions
+                  return destiny.getCharacter(membershipType, memberId, characterId, [200,202]).then(function(response) {
                         const characterResponse = response.Response;
                         const fields = transformCharacterStats(characterResponse);
                         return {
@@ -233,21 +216,40 @@ const getGroupMembersStats = async () => {
     });
 };
 
-const logDestiny = async influxClient => {
-    const promises = [
-        destiny.getCharacter(1, '4611686018431927918', '2305843009513035254', [200, 205]),
-        destiny.getClanAggregateStats('3997507'),
-        destiny.getHistoricalStats(1, '4611686018431927918', '2305843009513035254', { modes: [5], groups: [2] }), // weapons
-        destiny.getHistoricalStatsForAccount(1, '4611686018431927918'), //account
-        destiny.getGroupMembers('3997507'),
-        getGroupMembersStats()
-    ];
-    return Promise.all(promises)
-    .then((results) => {
-        return writeInflux(influxClient, ...results);
+const cacheSeasonHashes = () => {
+    const memberId = process.env.BUNGIE_MEMBER_ID;
+    return destiny.getProfile(1, memberId, [100])
+    .then(response => {
+        hashes.currentSeasonHash = response.Response.profile.data.currentSeasonHash;
+        return destiny.getDestinyEntityDefinition('DestinySeasonDefinition', hashes.currentSeasonHash);
     })
-    .catch(err => {
-        console.error(`Error: ${err}`);
+    .then(response => {
+        hashes.currentSeasonPassHash = response.Response.seasonPassHash;
+        return destiny.getDestinyEntityDefinition('DestinySeasonPassDefinition', hashes.currentSeasonPassHash);
+    })
+    .then(response => {
+        hashes.rewardProgressionHash = response.Response.rewardProgressionHash;
+        hashes.prestigeProgressionHash = response.Response.prestigeProgressionHash;
+        return hashes;
+    });
+};
+
+const logDestiny = async influxClient => {
+    const clanId = process.env.BUNGIE_CLAN_ID;
+
+    cacheSeasonHashes().then(hashes => {
+        const promises = [
+            destiny.getClanAggregateStats(clanId),
+            destiny.getGroupMembers(clanId),
+            getGroupMembersStats(clanId)
+        ];
+        return Promise.all(promises)
+        .then((results) => {
+          return writeInflux(influxClient, ...results);
+        })
+        .catch(err => {
+            console.error(`Error: ${err}`);
+        });
     });
 };
 
