@@ -92,12 +92,18 @@ const GAMETYPES = {
     84: 'TrialsOfOsiris',
 };
 
+let hashes = {};
 
 // Looking up my character: charId: 2305843009278477570
 // 205 gives inventory
 const transformCharacterStats = (character) => {
     const gloryRank = character.progressions.data.progressions['2000925172'].currentProgress;
     const valorRank = character.progressions.data.progressions['2626549951'].currentProgress;
+    const infamyRank = character.progressions.data.progressions['2772425241'].currentProgress;
+
+    const rewardProgressionRank = character.progressions.data.progressions[hashes.rewardProgressionHash].level;
+    const prestigeProgressionRank = character.progressions.data.progressions[hashes.prestigeProgressionHash].level;
+    const seasonRank = rewardProgressionRank + prestigeProgressionRank;
 
     const {
         dateLastPlayed,
@@ -117,6 +123,10 @@ const transformCharacterStats = (character) => {
         characterId,
         gloryRank,
         valorRank,
+        infamyRank,
+        rewardProgressionRank,
+        prestigeProgressionRank,
+        seasonRank,
     };
 
     fields.classType = CLASSTYPES[fields.classType];
@@ -168,7 +178,6 @@ const writeInfluxGroupMembersCharacters = (influxClient, characters) => {
     }
 };
 
-//const writeInflux = (influxClient, character, clan, weapons, account, groupMembers, groupMembersStats) => {
 const writeInflux = (influxClient, clan, groupMembers, groupMembersStats) => {
     writeInfluxClan(influxClient, clan.Response);
     writeInfluxGroupMembersStatus(influxClient, groupMembers.Response);
@@ -188,6 +197,7 @@ const getGroupMembersStats = async (clanId) => {
             return destiny.getProfile(membershipType, memberId, [100]).then(response => {
                 const characterIds = response.Response.profile.data.characterIds;
                 const displayName = response.Response.profile.data.userInfo.displayName;
+
                 return Promise.all(characterIds.map(function(characterId) {
                   // Destiny Component Types: https://bungie-net.github.io/multi/schema_Destiny-DestinyComponentType.html#schema_Destiny-DestinyComponentType
                   // 200 Characters
@@ -206,20 +216,40 @@ const getGroupMembersStats = async (clanId) => {
     });
 };
 
+const cacheSeasonHashes = () => {
+    const memberId = process.env.BUNGIE_MEMBER_ID;
+    return destiny.getProfile(1, memberId, [100])
+    .then(response => {
+        hashes.currentSeasonHash = response.Response.profile.data.currentSeasonHash;
+        return destiny.getDestinyEntityDefinition('DestinySeasonDefinition', hashes.currentSeasonHash);
+    })
+    .then(response => {
+        hashes.currentSeasonPassHash = response.Response.seasonPassHash;
+        return destiny.getDestinyEntityDefinition('DestinySeasonPassDefinition', hashes.currentSeasonPassHash);
+    })
+    .then(response => {
+        hashes.rewardProgressionHash = response.Response.rewardProgressionHash;
+        hashes.prestigeProgressionHash = response.Response.prestigeProgressionHash;
+        return hashes;
+    });
+};
+
 const logDestiny = async influxClient => {
     const clanId = process.env.BUNGIE_CLAN_ID;
-    const promises = [
-        destiny.getClanAggregateStats(clanId),
-        destiny.getGroupMembers(clanId),
-        getGroupMembersStats(clanId)
-    ];
-    return Promise.all(promises)
-    .then((results) => {
-      console.log('end');
-      //return writeInflux(influxClient, ...results);
-    })
-    .catch(err => {
-        console.error(`Error: ${err}`);
+
+    cacheSeasonHashes().then(hashes => {
+        const promises = [
+            destiny.getClanAggregateStats(clanId),
+            destiny.getGroupMembers(clanId),
+            getGroupMembersStats(clanId)
+        ];
+        return Promise.all(promises)
+        .then((results) => {
+          return writeInflux(influxClient, ...results);
+        })
+        .catch(err => {
+            console.error(`Error: ${err}`);
+        });
     });
 };
 
