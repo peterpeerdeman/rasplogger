@@ -96,6 +96,9 @@ const GAMETYPES = {
 // Looking up my character: charId: 2305843009278477570
 // 205 gives inventory
 const transformCharacterStats = (character) => {
+    const gloryRank = character.progressions.data.progressions['2000925172'].currentProgress;
+    const valorRank = character.progressions.data.progressions['2626549951'].currentProgress;
+
     const {
         dateLastPlayed,
         light,
@@ -112,6 +115,8 @@ const transformCharacterStats = (character) => {
         minutesPlayedThisSession,
         minutesPlayedTotal,
         characterId,
+        gloryRank,
+        valorRank,
     };
 
     fields.classType = CLASSTYPES[fields.classType];
@@ -184,7 +189,10 @@ const getGroupMembersStats = async (clanId) => {
                 const characterIds = response.Response.profile.data.characterIds;
                 const displayName = response.Response.profile.data.userInfo.displayName;
                 return Promise.all(characterIds.map(function(characterId) {
-                    return destiny.getCharacter(membershipType, memberId, characterId, [200, 205]).then(function(response) {
+                  // Destiny Component Types: https://bungie-net.github.io/multi/schema_Destiny-DestinyComponentType.html#schema_Destiny-DestinyComponentType
+                  // 200 Characters
+                  // 202 CharacterProgressions
+                  return destiny.getCharacter(membershipType, memberId, characterId, [200,202]).then(function(response) {
                         const characterResponse = response.Response;
                         const fields = transformCharacterStats(characterResponse);
                         return {
