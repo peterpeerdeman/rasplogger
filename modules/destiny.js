@@ -97,12 +97,14 @@ let hashes = {};
 // Looking up my character: charId: 2305843009278477570
 // 205 gives inventory
 const transformCharacterStats = (character) => {
-    const gloryRank = character.progressions.data.progressions['2000925172'].currentProgress;
-    const valorRank = character.progressions.data.progressions['2626549951'].currentProgress;
-    const infamyRank = character.progressions.data.progressions['2772425241'].currentProgress;
+    const progressionsEnabled = typeof character.progressions.data !== 'undefined' && typeof character.progressions.data.progressions !== 'undefined';
 
-    const rewardProgressionRank = character.progressions.data.progressions[hashes.rewardProgressionHash].level;
-    const prestigeProgressionRank = character.progressions.data.progressions[hashes.prestigeProgressionHash].level;
+    const gloryRank = progressionsEnabled ? character.progressions.data.progressions['2000925172'].currentProgress : 0;
+    const valorRank = progressionsEnabled ? character.progressions.data.progressions['2626549951'].currentProgress : 0;
+    const infamyRank = progressionsEnabled ? character.progressions.data.progressions['2772425241'].currentProgress : 0;
+    const rewardProgressionRank = progressionsEnabled ? character.progressions.data.progressions[hashes.rewardProgressionHash].level : 0;
+    const prestigeProgressionRank = progressionsEnabled ? character.progressions.data.progressions[hashes.prestigeProgressionHash].level : 0;
+
     const seasonRank = rewardProgressionRank + prestigeProgressionRank;
 
     const {
