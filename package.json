@@ -5,7 +5,7 @@
   "main": "rasplogger.js",
   "dependencies": {
     "amsterdam-parking": "^1.0.0",
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "commander": "^5.1.0",
     "cron": "^1.2.1",
     "dotenv": "^4.0.0",
