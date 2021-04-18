@@ -155,7 +155,7 @@ const writeInfluxClanGameModeStats = (influxClient, clan) => {
 };
 
 const writeInfluxJoinDates = (influxClient, clanmembers) => {
-      for(member of clanmembers.results) {
+      for(member of clanmembers) {
           const fields = {
               count: 1,
               displayName: member.destinyUserInfo.displayName,
@@ -168,9 +168,9 @@ const writeInfluxJoinDates = (influxClient, clanmembers) => {
       }
 };
 
-const writeInfluxClanCountStats = (influxClient, clanmembers) => {
+const writeInfluxClanCountStats = (influxClient, memberCount) => {
       const fields = {
-          numberOfClanMembers: clanmembers.totalResults
+          numberOfClanMembers: memberCount
       };
 
       influxClient.write('clanmembers')
@@ -178,16 +178,11 @@ const writeInfluxClanCountStats = (influxClient, clanmembers) => {
       .queue();
 };
 
-const writeInfluxGroupMembersStatus = (influxClient, status) => {
-    for(member of status.results) {
-        const fields = {
-            isOnline: member.isOnline,
-            memberType: member.memberType,
-        };
-
+const writeInfluxGroupMembersData = (influxClient, mergedMemberData) => {
+    for(const [key, value] of Object.entries(mergedMemberData)) {
         influxClient.write('clanmemberstatus')
-        .tag('displayName', member.destinyUserInfo.displayName)
-        .field(fields)
+        .tag('displayName', key)
+        .field(value)
         .queue();
     }
 };
@@ -204,44 +199,68 @@ const writeInfluxGroupMembersCharacters = (influxClient, characters) => {
     }
 };
 
-const writeInflux = (influxClient, clan, groupMembers, groupMembersStats) => {
-    writeInfluxClanGameModeStats(influxClient, clan.Response);
-    writeInfluxClanCountStats(influxClient, groupMembers.Response);
-    writeInfluxJoinDates(influxClient, groupMembers.Response);
-    writeInfluxGroupMembersStatus(influxClient, groupMembers.Response);
-    writeInfluxGroupMembersCharacters(influxClient, groupMembersStats.flat().flat());
+const mergeGroupMembersData = (memberStatus, memberCharacters) => {
+    let data = {};
+    for(member of memberStatus) {
+        data[member.destinyUserInfo.displayName] = {
+            isOnline: member.isOnline,
+            memberType: member.memberType,
+            displayName: member.destinyUserInfo.displayName,
+        };
+    }
+    for (character of memberCharacters) {
+        data[character.displayName].gloryRank = character.gloryRank;
+        data[character.displayName].infamyRank = character.infamyRank;
+        data[character.displayName].prestigeProgressionRank = character.prestigeProgressionRank;
+        data[character.displayName].rewardProgressionRank = character.rewardProgressionRank;
+        data[character.displayName].seasonRank = character.seasonRank;
+        data[character.displayName].valorRank = character.valorRank;
+    }
+    return data;
+};
+
+const writeInflux = (influxClient, aggregateStats, memberStats) => {
+    const memberCount = memberStats[0].totalResults;
+    const members = memberStats[0].results;
+    const memberCharacters = memberStats[1].flat().flat();
+
+    writeInfluxClanGameModeStats(influxClient, aggregateStats);
+    writeInfluxClanCountStats(influxClient, memberCount);
+    writeInfluxJoinDates(influxClient, members);
+
+    const mergedGroupMembersData = mergeGroupMembersData(members, memberCharacters);
+
+    writeInfluxGroupMembersData(influxClient, mergedGroupMembersData);
+    writeInfluxGroupMembersCharacters(influxClient, memberCharacters);
 
     influxClient.syncWrite()
     .then(() => console.debug(`${Date.now()} destiny: influx write point success`))
     .catch((error) => console.debug(`${Date.now()} destiny: write failed ${error}`));
 };
 
-const getGroupMembersStats = async (clanId) => {
-    return destiny.getGroupMembers(clanId).then(function(response) {
-        const members = response.Response.results;
-        return Promise.all(members.map(function(member) {
-            const memberId = member.destinyUserInfo.membershipId;
-            const membershipType = member.destinyUserInfo.membershipType;
-            return destiny.getProfile(membershipType, memberId, [100]).then(response => {
-                const characterIds = response.Response.profile.data.characterIds;
-                const displayName = response.Response.profile.data.userInfo.displayName;
+const fetchCharacters = (members) => {
+    return Promise.all(members.map(function(member) {
+        const memberId = member.destinyUserInfo.membershipId;
+        const membershipType = member.destinyUserInfo.membershipType;
+        return destiny.getProfile(membershipType, memberId, [100]).then(response => {
+            const characterIds = response.Response.profile.data.characterIds;
+            const displayName = response.Response.profile.data.userInfo.displayName;
 
-                return Promise.all(characterIds.map(function(characterId) {
-                  // Destiny Component Types: https://bungie-net.github.io/multi/schema_Destiny-DestinyComponentType.html#schema_Destiny-DestinyComponentType
-                  // 200 Characters
-                  // 202 CharacterProgressions
-                  return destiny.getCharacter(membershipType, memberId, characterId, [200,202]).then(function(response) {
-                        const characterResponse = response.Response;
-                        const fields = transformCharacterStats(characterResponse);
-                        return {
-                            displayName: displayName,
-                            ...fields
-                        };
-                    });
-                }));
-            });
-        }));
-    });
+            return Promise.all(characterIds.map(function(characterId) {
+                // Destiny Component Types: https://bungie-net.github.io/multi/schema_Destiny-DestinyComponentType.html#schema_Destiny-DestinyComponentType
+                // 200 Characters
+                // 202 CharacterProgressions
+                return destiny.getCharacter(membershipType, memberId, characterId, [200,202]).then(function(response) {
+                    const characterResponse = response.Response;
+                    const fields = transformCharacterStats(characterResponse);
+                    return {
+                        displayName: displayName,
+                        ...fields
+                    };
+                });
+            }));
+        });
+    }));
 };
 
 const cacheSeasonHashes = () => {
@@ -262,14 +281,32 @@ const cacheSeasonHashes = () => {
     });
 };
 
+const fetchAggregateStats = (clanId) => {
+  return destiny.getClanAggregateStats(clanId).then(response => {
+    return response.Response;
+  });
+};
+
+
+const fetchPerMemberStats = async (clanId) => {
+    return destiny.getGroupMembers(clanId).then(function(response) {
+        const members = response.Response;
+
+        const membersAndCharacters = [
+            members,
+            fetchCharacters(members.results)
+        ];
+        return Promise.all(membersAndCharacters);
+    });
+};
+
 const logDestiny = async influxClient => {
     const clanId = process.env.BUNGIE_CLAN_ID;
 
     cacheSeasonHashes().then(hashes => {
         const promises = [
-            destiny.getClanAggregateStats(clanId),
-            destiny.getGroupMembers(clanId),
-            getGroupMembersStats(clanId)
+            fetchAggregateStats(clanId),
+            fetchPerMemberStats(clanId),
         ];
         return Promise.all(promises)
         .then((results) => {
