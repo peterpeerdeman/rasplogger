@@ -153,21 +153,20 @@ const writeInfluxClanGameModeStats = (influxClient, clan) => {
         .queue();
     }
 };
-/*
+
 const writeInfluxJoinDates = (influxClient, clanmembers) => {
       for(member of clanmembers.results) {
           const fields = {
-              count: 1
+              count: 1,
+              displayName: member.destinyUserInfo.displayName,
           };
-
           influxClient.write('clanmemberenrollment')
           .tag('displayName', member.destinyUserInfo.displayName)
           .field(fields)
-          .time(new Date(member.joinDate).getTime()*1000, 'ns')
+          .time(new Date(member.joinDate).getTime()*1000*1000)
           .queue();
       }
 };
-*/
 
 const writeInfluxClanCountStats = (influxClient, clanmembers) => {
       const fields = {
@@ -208,7 +207,7 @@ const writeInfluxGroupMembersCharacters = (influxClient, characters) => {
 const writeInflux = (influxClient, clan, groupMembers, groupMembersStats) => {
     writeInfluxClanGameModeStats(influxClient, clan.Response);
     writeInfluxClanCountStats(influxClient, groupMembers.Response);
-    // writeInfluxJoinDates(influxClient, groupMembers.Response);
+    writeInfluxJoinDates(influxClient, groupMembers.Response);
     writeInfluxGroupMembersStatus(influxClient, groupMembers.Response);
     writeInfluxGroupMembersCharacters(influxClient, groupMembersStats.flat().flat());
 
