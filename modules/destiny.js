@@ -99,9 +99,9 @@ let hashes = {};
 const transformCharacterStats = (character) => {
     const progressionsEnabled = typeof character.progressions.data !== 'undefined' && typeof character.progressions.data.progressions !== 'undefined';
 
-    const gloryRank = progressionsEnabled ? character.progressions.data.progressions['2000925172'].currentProgress : 0;
-    const valorRank = progressionsEnabled ? character.progressions.data.progressions['2626549951'].currentProgress : 0;
-    const infamyRank = progressionsEnabled ? character.progressions.data.progressions['2772425241'].currentProgress : 0;
+    const gloryRank = progressionsEnabled ? character.progressions.data.progressions['1647151960'].currentProgress : 0;
+    const valorRank = progressionsEnabled ? character.progressions.data.progressions['2083746873'].currentProgress : 0;
+    const infamyRank = progressionsEnabled ? character.progressions.data.progressions['3008065600'].currentProgress : 0;
     const rewardProgressionRank = progressionsEnabled ? character.progressions.data.progressions[hashes.rewardProgressionHash].level : 0;
     const prestigeProgressionRank = progressionsEnabled ? character.progressions.data.progressions[hashes.prestigeProgressionHash].level : 0;
 
