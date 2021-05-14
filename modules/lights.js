@@ -7,17 +7,14 @@ const writeInflux = function(influxClient, lights) {
             .tag({
                 name: dataset.name,
                 uniqueid: dataset.uniqueid,
-                'alert': dataset['alert'],
-                colormode: dataset.colormode,
-                effect: dataset.effect,
             })
             .field({
-                on: dataset._rawData.state.on,
-                bri: dataset._rawData.state.bri,
-                ct: dataset._rawData.state.ct,
-                ...dataset._rawData.state.xy,
-                reachable: dataset._rawData.state.reachable,
-                hue: dataset._rawData.state.hue,
+                on: dataset.state.on,
+                bri: dataset.state.bri,
+                ct: dataset.state.ct,
+                ...dataset.state.xy,
+                reachable: dataset.state.reachable,
+                hue: dataset.state.hue,
             }).queue();
             resolve();
         });
