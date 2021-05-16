@@ -15,6 +15,11 @@ RaspLogger is a collection of datalogger modules that capture data and store the
 
 ## getting started
 
+create an environment file and fill it with the required variables per module by copying the example file:
+```
+cp .env.dist .env
+```
+
 ensure an influxdb server is running
 ```
 docker run -d -p 8086:8086 -v ~/influxdb/data:/var/lib/influxdb/data --restart always --name influxdb influxdb
