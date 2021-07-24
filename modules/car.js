@@ -94,7 +94,7 @@ const retrieveAndStoreData = async (influxClient, token) => {
 
         if (vehicle.state == 'offline') {
             const wakeup = await tjs.wakeUpAsync(vehicleOptions);
-            await sleep(60000);
+            await sleep(100000);
         }
         const vehicleData = await tjs.vehicleDataAsync(vehicleOptions);
         return writeInflux(influxClient, vehicleData);
