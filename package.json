@@ -8,6 +8,7 @@
     "axios": "^0.21.1",
     "commander": "^5.1.0",
     "cron": "^1.2.1",
+    "csv-parse": "^4.16.0",
     "dotenv": "^4.0.0",
     "express": "^4.17.1",
     "fitbit-node": "^2.2.0",
