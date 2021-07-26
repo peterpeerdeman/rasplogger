@@ -2,6 +2,7 @@
   "annotations": {
     "list": [
       {
+        "$$hashKey": "object:77",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -19,7 +20,11 @@
   "links": [],
   "panels": [
     {
-      "aliasColors": {},
+      "aliasColors": {
+        "prediction": "super-light-blue",
+        "prediction lower": "light-blue",
+        "prediction upper": "semi-dark-blue"
+      },
       "bars": false,
       "dashLength": 10,
       "dashes": false,
@@ -27,10 +32,290 @@
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 10,
+        "h": 8,
         "w": 23,
         "x": 0,
         "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 6,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "8.0.6",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:4829",
+          "alias": "prediction upper",
+          "fillBelowTo": "prediction lower",
+          "lines": false
+        },
+        {
+          "$$hashKey": "object:4834",
+          "alias": "prediction lower",
+          "lines": false
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "original data",
+          "groupBy": [
+            {
+              "params": [
+                "3d"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "previous"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "pvstatus",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "original",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "powerGeneration"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "prediction",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "previous"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "pvstatus_predictions",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"yhat\") FROM \"pvstatus_predictions\" WHERE (\"origin\" = 'prophetprediction') AND $timeFilter GROUP BY time(1d) fill(previous)",
+          "rawQuery": false,
+          "refId": "prediction",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "yhat"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "origin",
+              "operator": "=",
+              "value": "prophetprediction"
+            }
+          ]
+        },
+        {
+          "alias": "prediction lower",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "pvstatus_predictions",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"yhat_lower\") FROM \"pvstatus_predictions\" WHERE (\"origin\" = 'prophetprediction') AND $timeFilter GROUP BY time($__interval) fill(previous)",
+          "rawQuery": true,
+          "refId": "prediction_lower",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "yhat_lower"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "origin",
+              "operator": "=",
+              "value": "prophetprediction"
+            }
+          ]
+        },
+        {
+          "alias": "prediction upper",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "previous"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "pvstatus_predictions",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"yhat\") FROM \"pvstatus_predictions\" WHERE (\"origin\" = 'prophetprediction') AND $timeFilter GROUP BY time($__interval) fill(null)",
+          "rawQuery": false,
+          "refId": "prediction_upper",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "yhat_upper"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "origin",
+              "operator": "=",
+              "value": "prophetprediction"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "PV Power Generation Prediction",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:1609",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:1610",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "pv",
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 10,
+        "w": 23,
+        "x": 0,
+        "y": 8
       },
       "hiddenSeries": false,
       "id": 3,
@@ -47,10 +332,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "6.5.1",
+      "pluginVersion": "8.0.6",
       "pointradius": 1,
       "points": false,
       "renderer": "flot",
@@ -143,13 +428,19 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "pv",
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 10,
         "w": 23,
         "x": 0,
-        "y": 10
+        "y": 18
       },
       "hiddenSeries": false,
       "id": 4,
@@ -166,10 +457,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "6.5.1",
+      "pluginVersion": "8.0.6",
       "pointradius": 1,
       "points": false,
       "renderer": "flot",
@@ -262,13 +553,19 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "pv",
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 23,
         "x": 0,
-        "y": 20
+        "y": 28
       },
       "hiddenSeries": false,
       "id": 2,
@@ -285,9 +582,10 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "dataLinks": []
+        "alertThreshold": true
       },
       "percentage": false,
+      "pluginVersion": "8.0.6",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -376,15 +674,15 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 22,
+  "schemaVersion": 30,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "2016-06-06T17:10:36.398Z",
-    "to": "now"
+    "from": "now-104w",
+    "to": "now+52w"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -403,8 +701,5 @@
   "timezone": "",
   "title": "PV",
   "uid": "3ClIfEkgz",
-  "variables": {
-    "list": []
-  },
-  "version": 8
+  "version": 16
 }
