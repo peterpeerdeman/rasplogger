@@ -27,6 +27,7 @@ const writeInfluxTransactions = async (influxClient, transactions) => {
                 .write('transactions')
                 .tag({
                     crypto: 'btc',
+                    address: CRYPTO_ADDRESS,
                     type: 'sell',
                 })
                 .field({
