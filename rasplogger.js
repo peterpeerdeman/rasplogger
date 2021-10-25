@@ -12,6 +12,7 @@ const permittedModules = [
     'car',
     'cryptogas',
     'cryptohistory',
+    'cryptosupply',
     'cryptotransactions',
     'destiny',
     'fitbit',
