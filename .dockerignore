@@ -1,2 +1,5 @@
 .env
 .git
+.node-persist
+backup
+*.txt
