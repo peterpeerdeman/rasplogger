@@ -20,6 +20,7 @@ const permittedModules = [
     'lights',
     'parking',
     'pv',
+    'revenuesheet',
     'router',
     'temperature',
     'thermostat',
