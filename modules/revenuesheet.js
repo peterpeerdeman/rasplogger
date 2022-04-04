@@ -27,7 +27,7 @@ const getRevenuesheetData = async function () {
 
 const writeInflux = function (influxClient, data) {
     for (const datapoint of data) {
-        const { date, projectnr, client, ...fields } = datapoint;
+        const { date, projectnr, client, kind, ...fields } = datapoint;
 
         const timestamp = moment(date).add(12, 'hours');
         influxClient
@@ -35,6 +35,7 @@ const writeInflux = function (influxClient, data) {
             .time(timestamp.format('x') * 1000000)
             .field(fields)
             .tag('projectnr', projectnr)
+            .tag('kind', kind)
             .tag('client', client)
             .queue();
     }
