@@ -19,25 +19,24 @@ const writeInflux = (influxClient, cryptoDays, coin) => {
     });
     Promise.all(influxWrites).then(() => {});
 };
-
-const parseWebpage = async (response, influxClient) => {
+parseWebpage = async (response, influxClient) => {
     const $ = cheerio.load(await response.text());
-    const divs = $('.all_coll_row');
+    const rows = $('.all_collections tr');
     let i = 0;
-    for (const div of divs) {
+    for (const row of rows) {
         if (i == 0) {
             i++;
             continue;
         }
-        const cols = $(div).find('.all_coll_col');
-        const name = $(cols[0]).text().trim();
+        const cols = $(row).find('td');
+        const name = $(cols[1]).text().trim();
         const datapoint = {
-            floor: parseFloat($(cols[1]).text().split(' ')[0]),
-            items: parseInt($(cols[2]).text().trim()),
-            holders: parseInt($(cols[3]).text().trim()),
-            onsale_count: parseInt($(cols[4]).text().trim()),
-            onsale_percentage: parseFloat($(cols[5]).text().trim()),
-            floor_marketcap: $(cols[6]).text().trim(),
+            floor: parseFloat($(cols[2]).text().split(' ')[0]),
+            items: parseInt($(cols[3]).text().trim()),
+            holders: parseInt($(cols[4]).text().trim()),
+            onsale_count: parseInt($(cols[5]).text().trim()),
+            onsale_percentage: parseFloat($(cols[6]).text().trim()),
+            floor_marketcap: $(cols[7]).text().trim(),
         };
 
         influxClient
