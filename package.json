@@ -16,7 +16,7 @@
     "fritznode": "0.0.4",
     "google-spreadsheet": "^3.2.0",
     "influxdb-nodejs": "^3.1.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "node-destiny-2": "github:peterpeerdeman/node-destiny-2#master",
     "node-fetch": "^2.6.1",
     "node-hue-api": "^4.0.0",
