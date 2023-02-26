@@ -308,7 +308,7 @@ const fetchCharacters = (members) => {
                                     return {
                                         displayName: displayName,
                                         triumphsTotalScore: triumphsTotalScore,
-                                        itemsCollected: triumphsTotalScore,
+                                        itemsCollected: itemsCollected,
                                         ...fields,
                                     };
                                 });
