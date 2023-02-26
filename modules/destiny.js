@@ -232,6 +232,9 @@ const mergeGroupMembersData = (memberStatus, memberCharacters) => {
             character.rewardProgressionRank;
         data[character.displayName].seasonRank = character.seasonRank;
         data[character.displayName].valorRank = character.valorRank;
+        data[character.displayName].triumphsTotalScore =
+            character.triumphsTotalScore;
+        data[character.displayName].itemsCollected = character.itemsCollected;
     }
     return data;
 };
@@ -268,13 +271,21 @@ const fetchCharacters = (members) => {
         members.map(function (member) {
             const memberId = member.destinyUserInfo.membershipId;
             const membershipType = member.destinyUserInfo.membershipType;
+            // 100
+            // 900 Records
+            // 1100 Metrics
             return destiny
-                .getProfile(membershipType, memberId, [100])
+                .getProfile(membershipType, memberId, [100, 900, 1100])
                 .then((response) => {
                     const characterIds =
                         response.Response.profile.data.characterIds;
                     const displayName =
                         response.Response.profile.data.userInfo.displayName;
+                    const triumphsTotalScore =
+                        response.Response.profileRecords.data.activeScore;
+                    const itemsCollected =
+                        response.Response.metrics.data.metrics['3981543480']
+                            .objectiveProgress.progress;
 
                     return Promise.all(
                         characterIds.map(function (characterId) {
@@ -296,6 +307,8 @@ const fetchCharacters = (members) => {
                                         );
                                     return {
                                         displayName: displayName,
+                                        triumphsTotalScore: triumphsTotalScore,
+                                        itemsCollected: triumphsTotalScore,
                                         ...fields,
                                     };
                                 });
