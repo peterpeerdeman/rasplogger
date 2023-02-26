@@ -284,7 +284,7 @@ const fetchCharacters = (members) => {
                     const triumphsTotalScore =
                         response.Response.profileRecords.data.activeScore;
                     const itemsCollected =
-                        response.Response.metrics.data.metrics['3981543480']
+                        response.Response.metrics.data.metrics['3526455111']
                             .objectiveProgress.progress;
 
                     return Promise.all(
