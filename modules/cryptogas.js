@@ -41,7 +41,7 @@ const writeInflux = async (influxClient, data) => {
 };
 
 const logCryptoGas = async (influxClient) => {
-    const url = `https://owlracle.info/eth/gas`;
+    const url = `https://api.owlracle.info/v4/eth/gas?apikey=${process.env.CRYPTO_GAS_APIKEY}`;
     try {
         const response = await axios.get(url);
         writeInflux(influxClient, response.data);
