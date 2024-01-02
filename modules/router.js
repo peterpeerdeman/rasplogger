@@ -55,7 +55,6 @@ const writeInflux = (influxClient, bandwidth, devices, overview, nas) => {
 
 const logRouter = async (influxClient) => {
     const con = await fritznode.fritz({});
-    debugger;
     const promises = [
         con.getBandwithUsage(),
         con.getDeviceList(),
