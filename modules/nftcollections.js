@@ -1,24 +1,6 @@
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
 
-const writeInflux = (influxClient, cryptoDays, coin) => {
-    let influxWrites = cryptoDays.map(function (day) {
-        const { date, ...fields } = day;
-        return new Promise((resolve) => {
-            influxClient
-                .write('prices')
-                .tag({
-                    currency: 'eur',
-                    crypto: coin,
-                })
-                .field(fields)
-                .time(date * 1000 * 1000 * 1000)
-                .queue();
-            resolve();
-        });
-    });
-    Promise.all(influxWrites).then(() => {});
-};
 parseWebpage = async (response, influxClient) => {
     const $ = cheerio.load(await response.text());
     const rows = $('.all_collections tr');
