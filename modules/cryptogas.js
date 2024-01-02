@@ -1,12 +1,12 @@
 const axios = require('axios');
 
 const writeInflux = async (influxClient, data) => {
-    const { avgGas, avgTime, avgTx, baseFee, lastBlock } = data;
+    const { avgGas, avgTime, avgTx } = data;
 
-    const slowPriceWei = data.speeds[0].gasPrice;
-    const standardPriceWei = data.speeds[1].gasPrice;
-    const fastPriceWei = data.speeds[2].gasPrice;
-    const instantPriceWei = data.speeds[3].gasPrice;
+    const slowPriceWei = data.speeds[0].baseFee;
+    const standardPriceWei = data.speeds[1].baseFee;
+    const fastPriceWei = data.speeds[2].baseFee;
+    const instantPriceWei = data.speeds[3].baseFee;
     const slowFeeDollars = data.speeds[0].estimatedFee;
     const standardFeeDollars = data.speeds[1].estimatedFee;
     const fastFeeDollars = data.speeds[2].estimatedFee;
@@ -21,8 +21,6 @@ const writeInflux = async (influxClient, data) => {
             avgGas,
             avgTime,
             avgTx,
-            baseFee,
-            lastBlock,
             slowPriceWei,
             standardPriceWei,
             fastPriceWei,
