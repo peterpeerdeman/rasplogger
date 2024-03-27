@@ -13,15 +13,15 @@ const getRevenuesheetData = async function () {
     const rows = await sheet.getRows();
     return rows.map((row) => {
         return {
-            date: new Date(row['date']),
-            client: row['Opdrachtgever'],
-            kind: row['Soort werk'],
-            description: row['Omschrijving activiteit'],
-            amount: parseFloat(row['amount']),
-            words: parseInt(row['Aantal woorden']) || undefined,
-            hours: parseFloat(row['Aantal uren']) || undefined,
-            payed: row['Betaald?'] == 'Ja' ? true : false,
-            projectnr: row['Projectnummer Scripta'],
+            date: new Date(row.get('date')),
+            client: row.get('Opdrachtgever'),
+            kind: row.get('Soort werk'),
+            description: row.get('Omschrijving activiteit'),
+            amount: parseFloat(row.get('amount')),
+            words: parseInt(row.get('Aantal woorden')) || undefined,
+            hours: parseFloat(row.get('Aantal uren')) || undefined,
+            payed: row.get('Betaald?') == 'Ja' ? true : false,
+            projectnr: row.get('Projectnummer Scripta'),
         };
     });
 };
