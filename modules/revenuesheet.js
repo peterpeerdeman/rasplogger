@@ -3,8 +3,9 @@ const moment = require('moment');
 
 const getRevenuesheetData = async function () {
     // Initialize the sheet - doc ID is the long id in the sheets URL
-    const doc = new GoogleSpreadsheet(process.env.REVENUE_SHEET_DOC_ID);
-    doc.useApiKey(process.env.REVENUE_GOOGLE_APIKEY);
+    const doc = new GoogleSpreadsheet(process.env.REVENUE_SHEET_DOC_ID, {
+        apiKey: process.env.REVENUE_GOOGLE_APIKEY,
+    });
 
     await doc.loadInfo(); // loads document properties and worksheets
     const sheet = doc.sheetsByIndex[0]; // or use doc.sheetsById[id] or doc.sheetsByTitle[title]
