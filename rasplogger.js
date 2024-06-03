@@ -33,8 +33,14 @@ program
         if (!permittedModules.includes(module)) {
             throw Error('this module is not permitted');
         }
+        const influxUrl = process.env.INFLUXDB_URL || program.url;
+        if (!influxUrl) {
+            throw Error(
+                'influxurl is required, use -u <url> or set INFLUXDB_URL env variable'
+            );
+        }
         const logFunction = require(`./modules/${module}.js`);
-        const influxClient = new Influx(program.url);
+        const influxClient = new Influx(influxUrl);
         logFunction(influxClient);
     });
 
@@ -45,8 +51,15 @@ program
         if (!permittedModules.includes(module)) {
             throw Error('this module is not permitted');
         }
+        const influxUrl = process.env.INFLUXDB_URL || program.url;
+        if (!influxUrl) {
+            throw Error(
+                'influxurl is required, use -u <url> or set INFLUXDB_URL env variable'
+            );
+        }
+
         const logFunction = require(`./modules/${module}.js`);
-        const influxClient = new Influx(program.url);
+        const influxClient = new Influx(influxUrl);
 
         const cronJob = new CronJob({
             cronTime: frequency,
