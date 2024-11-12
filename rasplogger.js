@@ -1,6 +1,6 @@
-require('dotenv').config();
+const dotenv = require('dotenv');
+dotenv.config()
 
-const express = require('express');
 const CronJob = require('cron').CronJob;
 const Influx = require('influxdb-nodejs');
 
@@ -8,6 +8,7 @@ const { program } = require('commander');
 
 program.version('1.0.0');
 
+/** @type {string[]} */
 const permittedModules = [
     'nftcollections',
     'cryptogas',
@@ -29,7 +30,7 @@ program.option('-u, --url <url>', 'influx database url');
 program
     .command('once <module>')
     .description('run rasplogger once for a specific module')
-    .action((module, options) => {
+    .action((module) => {
         if (!permittedModules.includes(module)) {
             throw Error('this module is not permitted');
         }
@@ -47,7 +48,7 @@ program
 program
     .command('cron <module> <frequency>')
     .description('run rasplogger using cron for a specific module')
-    .action((module, frequency, options) => {
+    .action((module, frequency) => {
         if (!permittedModules.includes(module)) {
             throw Error('this module is not permitted');
         }
