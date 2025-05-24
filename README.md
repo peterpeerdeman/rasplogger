@@ -16,16 +16,19 @@ RaspLogger is a collection of datalogger modules that capture data and store the
 ## getting started
 
 create an environment file and fill it with the required variables per module by copying the example file:
+
 ```
 cp .env.dist .env
 ```
 
 ensure an influxdb server is running
+
 ```
 docker run -d -p 8086:8086 -v ~/influxdb/data:/var/lib/influxdb/data --restart always --name influxdb influxdb
 ```
 
 run rasplogger through docker
+
 ```
 docker run -it --rm --name rasplogger -v "$PWD":/usr/src/app -w /usr/src/app --restart always node:13-buster node rasplogger.js once destiny -u http://influxdb:8086/destiny
 ```
@@ -50,26 +53,31 @@ Commands:
 ## examples
 
 log destiny data once
+
 ```
 node rasplogger.js once parking -u http://localhost:8086/parking
 ```
 
 log parking data every second
+
 ```
 node rasplogger.js cron parking "* * * * * *" -u http://localhost:8086/parking
 ```
 
 log pvdata every 5 minutes
+
 ```
 node rasplogger.js cron pv "*/5 * * * *" -u http://localhost:8086/pv
 ```
 
 log router data every 30 minutes
+
 ```
 node rasplogger.js cron parking "*/30 * * * *" -u http://localhost:8086/parking
 ```
 
 start all loggers through cron at the same time (-u is used to specify base influxdb string without databasename)
+
 ```
 node rasplogger all -u http://localhost:8086
 ```
@@ -80,3 +88,10 @@ you can use the following grafana dashboard exports to visualise the data collec
 
 ![pv dashboard](grafana-dashboards/pv-output.png)
 [PV Output dashboard json export for Grafana 6.7.3](grafana-dashboards/pv-output.json)
+
+## building cross platform images
+
+```
+docker buildx build -t peterpeerdeman/rasplogger:2.0.2-x86_64 --platform linux/x86_64 --push -f Dockerfile-amd64 .
+docker buildx build -t peterpeerdeman/rasplogger:2.0.2-arm64 --platform linux/arm64/v8 --push -f Dockerfile .
+```
