@@ -1,47 +1,47 @@
 {
-  "name": "rasplogger",
-  "version": "2.0.1",
-  "description": "",
-  "main": "rasplogger.js",
-  "dependencies": {
-    "amsterdam-parking": "^1.0.0",
-    "axios": "^1.6.8",
-    "commander": "^5.1.0",
-    "cron": "^1.2.1",
-    "csv-parse": "^4.16.0",
-    "dotenv": "^4.0.0",
-    "express": "^4.17.1",
-    "fitbit-node": "2.2.0",
-    "flat": "^5.0.0",
-    "fritznode": "0.0.5",
-    "google-auth-library": "^9.10.0",
-    "google-spreadsheet": "^4.1.1",
-    "influxdb-nodejs": "^3.1.0",
-    "moment": "^2.24.0",
-    "node-destiny-2": "github:peterpeerdeman/node-destiny-2#master",
-    "node-fetch": "^2.6.1",
-    "node-hue-api": "^5.0.0-beta.16",
-    "node-persist": "^3.0.5",
-    "node-tado-client": "^0.14.3",
-    "pvoutput": "github:peterpeerdeman/pvoutput#master"
-  },
-  "devDependencies": {
-    "chai": "^4.2.0",
-    "mocha": "^9.1.3",
-    "nock": "^11.7.0",
-    "sinon": "^8.0.1"
-  },
-  "scripts": {
-    "test": "./node_modules/mocha/bin/mocha"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/peterpeerdeman/rasplogger.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/peterpeerdeman/rasplogger/issues"
-  },
-  "homepage": "https://github.com/peterpeerdeman/rasplogger#readme"
+    "name": "rasplogger",
+    "version": "2.0.2",
+    "description": "",
+    "main": "rasplogger.js",
+    "dependencies": {
+        "amsterdam-parking": "^1.0.0",
+        "axios": "^1.6.8",
+        "commander": "^5.1.0",
+        "cron": "^1.2.1",
+        "csv-parse": "^4.16.0",
+        "dotenv": "^4.0.0",
+        "express": "^4.17.1",
+        "fitbit-node": "2.2.0",
+        "flat": "^5.0.0",
+        "fritznode": "0.0.5",
+        "google-auth-library": "^9.10.0",
+        "google-spreadsheet": "^4.1.1",
+        "influxdb-nodejs": "^3.1.0",
+        "moment": "^2.24.0",
+        "node-destiny-2": "github:peterpeerdeman/node-destiny-2#master",
+        "node-fetch": "^2.6.1",
+        "node-hue-api": "^5.0.0-beta.16",
+        "node-persist": "^3.0.5",
+        "node-tado-client": "1.0.1",
+        "pvoutput": "github:peterpeerdeman/pvoutput#master"
+    },
+    "devDependencies": {
+        "chai": "^4.2.0",
+        "mocha": "^9.1.3",
+        "nock": "^11.7.0",
+        "sinon": "^8.0.1"
+    },
+    "scripts": {
+        "test": "./node_modules/mocha/bin/mocha"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/peterpeerdeman/rasplogger.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/peterpeerdeman/rasplogger/issues"
+    },
+    "homepage": "https://github.com/peterpeerdeman/rasplogger#readme"
 }

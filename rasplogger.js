@@ -1,5 +1,5 @@
 const dotenv = require('dotenv');
-dotenv.config()
+dotenv.config();
 
 const CronJob = require('cron').CronJob;
 const Influx = require('influxdb-nodejs');
@@ -37,7 +37,7 @@ program
         const influxUrl = process.env.INFLUXDB_URL || program.url;
         if (!influxUrl) {
             throw Error(
-                'influxurl is required, use -u <url> or set INFLUXDB_URL env variable'
+                'influxurl is required, use -u <url> or set INFLUXDB_URL env variable',
             );
         }
         const logFunction = require(`./modules/${module}.js`);
@@ -55,7 +55,7 @@ program
         const influxUrl = process.env.INFLUXDB_URL || program.url;
         if (!influxUrl) {
             throw Error(
-                'influxurl is required, use -u <url> or set INFLUXDB_URL env variable'
+                'influxurl is required, use -u <url> or set INFLUXDB_URL env variable',
             );
         }
 
@@ -72,7 +72,7 @@ program
         });
         cronJob.start();
         console.log(
-            `${new Date().toISOString()} RaspLogger activated module ${module}`
+            `${new Date().toISOString()} RaspLogger activated module ${module}`,
         );
     });
 

@@ -1,0 +1,48 @@
+[
+    {
+        "id": 1,
+        "name": "Living room",
+        "type": "HEATING",
+        "dateCreated": "2019-12-28T11:05:12.148Z",
+        "deviceTypes": [
+            "RU02"
+        ],
+        "devices": [
+            {
+                "deviceType": "RU02",
+                "serialNo": "RU0000000000",
+                "shortSerialNo": "RU0000000000",
+                "currentFwVersion": "215.2",
+                "connectionState": {
+                    "value": true,
+                    "timestamp": "2025-05-24T22:06:43.822Z"
+                },
+                "characteristics": {
+                    "capabilities": [
+                        "INSIDE_TEMPERATURE_MEASUREMENT",
+                        "IDENTIFY"
+                    ]
+                },
+                "batteryState": "NORMAL",
+                "duties": [
+                    "ZONE_UI",
+                    "CIRCUIT_DRIVER",
+                    "ZONE_LEADER"
+                ]
+            }
+        ],
+        "reportAvailable": false,
+        "showScheduleSetup": false,
+        "supportsDazzle": true,
+        "dazzleEnabled": true,
+        "dazzleMode": {
+            "supported": true,
+            "enabled": true
+        },
+        "openWindowDetection": {
+            "supported": true,
+            "enabled": true,
+            "timeoutInSeconds": 900
+        }
+    }
+]
