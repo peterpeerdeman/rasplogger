@@ -9,20 +9,21 @@ const getRevenuesheetData = async function () {
         // see "Authentication" section in docs for more info
         email: process.env.REVENUE_SERVICE_EMAIL,
         key: Buffer.from(process.env.REVENUE_PRIVATE_KEY, 'base64').toString(
-            'utf-8'
+            'utf-8',
         ),
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
     // Initialize the sheet - doc ID is the long id in the sheets URL
     const doc = new GoogleSpreadsheet(
         process.env.REVENUE_SHEET_DOC_ID,
-        serviceAccountAuth
+        serviceAccountAuth,
     );
 
     await doc.loadInfo(); // loads document properties and worksheets
-    const sheet = doc.sheetsByIndex[0]; // or use doc.sheetsById[id] or doc.sheetsByTitle[title]
+    const sheet = doc.sheetsByTitle['Facturen']; // or use doc.sheetsById[id] or doc.sheetsByTitle[title]
     await sheet.loadHeaderRow();
     const rows = await sheet.getRows();
+
     return rows.map((row) => {
         if (!row.get('date')) return undefined;
         return {
@@ -60,8 +61,8 @@ const writeInflux = function (influxClient, data) {
         .then(() => console.debug(`${Date.now()} revenuesheet: write success`))
         .catch((err) =>
             console.error(
-                `${Date.now()} revenuesheet: write failed ${err.message}`
-            )
+                `${Date.now()} revenuesheet: write failed ${err.message}`,
+            ),
         );
 };
 
