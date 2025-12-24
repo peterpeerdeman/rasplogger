@@ -76,12 +76,6 @@ log router data every 30 minutes
 node rasplogger.js cron parking "*/30 * * * *" -u http://localhost:8086/parking
 ```
 
-start all loggers through cron at the same time (-u is used to specify base influxdb string without databasename)
-
-```
-node rasplogger all -u http://localhost:8086
-```
-
 ## grafana dashboards
 
 you can use the following grafana dashboard exports to visualise the data collected by rasplogger
