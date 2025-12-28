@@ -1,5 +1,5 @@
 # specify the node base image with your desired version node:<version>
-FROM arm64v8/node:16.13.2-slim
+FROM arm64v8/node:24.12.0-slim
 WORKDIR /app
 COPY package.json package-lock.json ./
 
@@ -9,7 +9,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --prod
 
 # Then we copy over the modules from above onto a `slim` image
-FROM arm64v8/node:16.13.2-alpine
+FROM arm64v8/node:24.12.0-alpine
 
 # If possible, run your container using `docker run --init`
 # Otherwise, you can use `tini`:
