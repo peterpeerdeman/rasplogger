@@ -1,6 +1,7 @@
 const expect = require('chai').expect;
 const nock = require('nock');
 const Influx = require('influxdb-nodejs');
+const sinon = require('sinon');
 const fs = require('fs');
 influxClient = new Influx('http://localhost:8086/pv');
 
@@ -14,6 +15,10 @@ const pvoutput_cloudy_response = fs.readFileSync('test/response.pvoutput.cloudy'
 const pvoutput_notime_response = fs.readFileSync('test/response.pvoutput.notime','utf8');
 
 describe('pvoutput tests', () => {
+    afterEach(() => {
+        nock.cleanAll();
+        sinon.restore();
+    });
     it('Should save sunny data', (done) => {
         nock('http://pvoutput.org')
             .get('/service/r2/getstatus.jsp')
@@ -23,6 +28,14 @@ describe('pvoutput tests', () => {
 
             })
             .reply(200, pvoutput_sunny_response);
+
+        const writeStub = sinon.stub(influxClient, 'write').returns({
+            time: sinon.stub().returnsThis(),
+            field: sinon.stub().returns({
+                then: sinon.stub().callsFake((callback) => Promise.resolve(callback())),
+                catch: sinon.stub().callsFake((callback) => this)
+            })
+        });
 
         logPV(influxClient).then(response => {
             expect(response).to.equal(true);
@@ -39,6 +52,15 @@ describe('pvoutput tests', () => {
 
             })
             .reply(200, pvoutput_cloudy_response);
+
+        const writeStub = sinon.stub(influxClient, 'write').returns({
+            time: sinon.stub().returnsThis(),
+            field: sinon.stub().returns({
+                then: sinon.stub().callsFake((callback) => Promise.resolve(callback())),
+                catch: sinon.stub().callsFake((callback) => this)
+            })
+        });
+
         logPV(influxClient).then(response => {
             expect(response).to.equal(true);
             done();
