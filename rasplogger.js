@@ -10,20 +10,16 @@ program.version('1.0.0');
 
 /** @type {string[]} */
 const permittedModules = [
-    'nftcollections',
     'cryptogas',
     'cryptohistory',
-    'cryptosupply',
     'cryptotransactions',
     'destiny',
     'fitbit',
     'lights',
-    'parking',
     'pv',
     'revenuesheet',
     'router',
     'temperature',
-    'thermostat',
 ];
 program.option('-u, --url <url>', 'influx database url');
 

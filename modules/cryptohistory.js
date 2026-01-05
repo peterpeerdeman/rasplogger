@@ -1,5 +1,4 @@
 const fetch = require('node-fetch');
-const cheerio = require('cheerio');
 
 const writeInflux = (influxClient, candles, coin) => {
     debugger;
@@ -24,15 +23,15 @@ const writeInflux = (influxClient, candles, coin) => {
             .syncWrite()
             .then(() =>
                 console.debug(
-                    `${Date.now()} cryptohistory: sync write ${coin} queue success`
-                )
+                    `${Date.now()} cryptohistory: sync write ${coin} queue success`,
+                ),
             )
             .catch((err) =>
                 console.error(
                     `${Date.now()} cryptohistory: sync write ${coin} queue failed ${
                         err.message
-                    }`
-                )
+                    }`,
+                ),
             );
     });
 };
@@ -54,14 +53,14 @@ const fetchBTC = async () => {
     try {
         const response = await fetch(
             'https://api.bitvavo.com/v2/BTC-EUR/candles?interval=1h',
-            {}
+            {},
         );
         const data = await response.json();
         const result = candlesToFields(data);
         return result;
     } catch (error) {
         return console.debug(
-            `${Date.now()} cryptohistory: retrieve btc cryptohistory failed ${error}`
+            `${Date.now()} cryptohistory: retrieve btc cryptohistory failed ${error}`,
         );
     }
 };
@@ -70,14 +69,14 @@ const fetchETH = async () => {
     try {
         const response = await fetch(
             'https://api.bitvavo.com/v2/ETH-EUR/candles?interval=1h',
-            {}
+            {},
         );
         const data = await response.json();
         const result = candlesToFields(data);
         return result;
     } catch (error) {
         return console.debug(
-            `${Date.now()} cryptohistory: retrieve eth cryptohistory failed ${error}`
+            `${Date.now()} cryptohistory: retrieve eth cryptohistory failed ${error}`,
         );
     }
 };
