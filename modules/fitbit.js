@@ -19,6 +19,18 @@ const fitbit12 = new FitbitApiClient({
     apiVersion: '1.2',
 });
 
+// Some rejected promises in this codebase's dependencies (simple-oauth2 in
+// particular) reject with plain objects rather than Error instances, which
+// stringify as unhelpful "[object Object]" in template literals.
+const formatError = (error) => {
+    if (error instanceof Error) return error.stack || error.message;
+    try {
+        return JSON.stringify(error);
+    } catch (_) {
+        return String(error);
+    }
+};
+
 const convertTimestampToMoment = function (date, time) {
     const [hour, minute, second] = time.split(':');
     let timestamp = moment(date);
@@ -164,7 +176,7 @@ const writeInflux = (
             console.debug(`${Date.now()} fitbit: influx write point success`)
         )
         .catch((error) =>
-            console.debug(`${Date.now()} fitbit: write failed ${error}`)
+            console.debug(`${Date.now()} fitbit: write failed ${formatError(error)}`)
         );
 };
 
@@ -217,7 +229,7 @@ const logFitbit = async (influxClient) => {
         tokens = await checkTokenAndRefreshIfNeeded(tokens);
     } catch (error) {
         return console.debug(
-            `${Date.now()} fitbit: retrieve accesstoken failed ${error}`
+            `${Date.now()} fitbit: retrieve accesstoken failed ${formatError(error)}`
         );
     }
 
@@ -237,7 +249,7 @@ const logFitbit = async (influxClient) => {
         });
     } catch (error) {
         return console.debug(
-            `${Date.now()} fitbit: retrieve fitbit data failed ${error}`
+            `${Date.now()} fitbit: retrieve fitbit data failed ${formatError(error)}`
         );
     }
 };
@@ -347,7 +359,7 @@ const backfillRange = async (
             } catch (error) {
                 if (attempt === maxAttempts) {
                     throw new Error(
-                        `backfill failed on ${date} after ${maxAttempts} attempts: ${error}. ` +
+                        `backfill failed on ${date} after ${maxAttempts} attempts: ${formatError(error)}. ` +
                             `Rerun with the same start/end to resume from this date.`
                     );
                 }
@@ -355,7 +367,7 @@ const backfillRange = async (
                     ? 65 * 60 * 1000
                     : delayMs * attempt;
                 console.log(
-                    `${Date.now()} fitbit: ${date} attempt ${attempt} failed (${error}), retrying in ${backoff}ms...`
+                    `${Date.now()} fitbit: ${date} attempt ${attempt} failed (${formatError(error)}), retrying in ${backoff}ms...`
                 );
                 await sleepMs(backoff);
             }
