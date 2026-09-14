@@ -1,0 +1,53 @@
+name: release
+
+# Builds and pushes a multi-arch (amd64 + arm64) rasplogger image whenever a
+# version tag (e.g. "2.0.6") is pushed, mirroring the manual
+# `docker buildx build --platform ... --push` steps documented in the README,
+# but as one multi-platform manifest instead of two separate per-arch tags.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile-amd64
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/peterpeerdeman/rasplogger:${{ github.ref_name }}
+            ghcr.io/peterpeerdeman/rasplogger:latest
+            docker.io/peterpeerdeman/rasplogger:${{ github.ref_name }}
+            docker.io/peterpeerdeman/rasplogger:latest

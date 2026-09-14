@@ -83,9 +83,22 @@ you can use the following grafana dashboard exports to visualise the data collec
 ![pv dashboard](grafana-dashboards/pv-output.png)
 [PV Output dashboard json export for Grafana 6.7.3](grafana-dashboards/pv-output.json)
 
-## building cross platform images
+## releasing
+
+pushing a version tag (e.g. `2.0.6`, matching the `version` in `package.json`) triggers
+[`.github/workflows/release.yml`](.github/workflows/release.yml), which builds a
+multi-arch (amd64 + arm64) image from `Dockerfile-amd64` and pushes it as
+`ghcr.io/peterpeerdeman/rasplogger:<tag>` and `peterpeerdeman/rasplogger:<tag>` on Docker Hub
+(plus `:latest` on both). Requires the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repo secrets;
+GHCR uses the built-in `GITHUB_TOKEN`.
 
 ```
-docker buildx build -t peterpeerdeman/rasplogger:2.0.2-x86_64 --platform linux/x86_64 --push -f Dockerfile-amd64 .
-docker buildx build -t peterpeerdeman/rasplogger:2.0.2-arm64 --platform linux/arm64/v8 --push -f Dockerfile .
+git tag 2.0.6
+git push origin 2.0.6
+```
+
+To build a cross-platform image locally instead:
+
+```
+docker buildx build -t peterpeerdeman/rasplogger:2.0.6 --platform linux/amd64,linux/arm64 --push -f Dockerfile-amd64 .
 ```
