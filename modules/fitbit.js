@@ -1,4 +1,4 @@
-const FitbitApiClient = require('fitbit-node');
+const FitbitApiClient = require('./fitbit-client');
 const storage = require('node-persist');
 const moment = require('moment');
 const flatten = require('flat');
