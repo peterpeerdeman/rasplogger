@@ -77,7 +77,7 @@ const writeInfluxProfile = (influxClient, user) => {
         .queue();
 };
 
-const writeInfluxSleep = (influxClient, sleep) => {
+const writeInfluxSleep = (influxClient, sleep, date) => {
     if (!sleep.sleep) {
         throw new Error('sleepdata was not defined');
     }
@@ -111,15 +111,14 @@ const writeInfluxSleep = (influxClient, sleep) => {
     }
 
     //summary
-    const currentDate = new moment(moment().format('YYYY-MM-DD'));
     influxClient
         .write('sleepsummaries')
-        .time(currentDate.format('x') * 1000000)
+        .time(moment(date).format('x') * 1000000)
         .field(flatten(sleep.summary))
         .queue();
 };
 
-const writeInfluxHeartrate = (influxClient, heartrate) => {
+const writeInfluxHeartrate = (influxClient, heartrate, date) => {
     if (!heartrate['activities-heart']) return;
     if (!heartrate['activities-heart-intraday']) return;
 
@@ -135,7 +134,7 @@ const writeInfluxHeartrate = (influxClient, heartrate) => {
 
     //heartrates
     for (rate of heartrate['activities-heart-intraday'].dataset) {
-        const timestamp = convertTimestampToMoment(new Date(), rate.time);
+        const timestamp = convertTimestampToMoment(date, rate.time);
         influxClient
             .write('heartrate')
             .time(timestamp.format('x') * 1000000)
@@ -156,10 +155,10 @@ const writeInflux = (
 ) => {
     writeInfluxActivities(influxClient, activities[0].summary, date);
     writeInfluxProfile(influxClient, profile[0].user);
-    writeInfluxHeartrate(influxClient, heartrate[0]);
-    writeInfluxSleep(influxClient, sleep[0]);
+    writeInfluxHeartrate(influxClient, heartrate[0], date);
+    writeInfluxSleep(influxClient, sleep[0], date);
 
-    influxClient
+    return influxClient
         .syncWrite()
         .then(() =>
             console.debug(`${Date.now()} fitbit: influx write point success`)
@@ -169,20 +168,20 @@ const writeInflux = (
         );
 };
 
-const printCallbackUrl = () => {
+const getAuthorizeUrl = () => {
     const scopes = 'activity heartrate nutrition profile sleep weight';
-    const callback = fitbit1.getAuthorizeUrl(scopes, 'http://localhost:8553');
-    console.log(callback);
+    return fitbit1.getAuthorizeUrl(scopes, 'http://localhost:8553');
 };
 
-const translateCode = (code) => {
-    return fitbit1
-        .getAccessToken(code, 'http://localhost:8553')
-        .then((result) => {
-            return result;
-        });
+const storeAuthCode = async (code) => {
+    const tokens = await fitbit1.getAccessToken(code, 'http://localhost:8553');
+    await storage.init();
+    await storage.setItem('fitbit-tokens', tokens);
+    return tokens;
 };
 
+// Returns the tokens that should actually be used for the next API calls:
+// the refreshed ones if the access token had gone stale, otherwise the ones passed in.
 const checkTokenAndRefreshIfNeeded = async (tokens) => {
     const result = await fitbit11.post(
         '/oauth2/introspect',
@@ -197,30 +196,25 @@ const checkTokenAndRefreshIfNeeded = async (tokens) => {
             tokens.refresh_token
         );
         await storage.setItem('fitbit-tokens', refreshedToken);
-        return false;
+        return refreshedToken;
     } else {
-        return true;
+        return tokens;
     }
 };
 
 const logFitbit = async (influxClient) => {
     const storagestatus = await storage.init();
-    const tokens = await storage.getItem('fitbit-tokens');
+    let tokens = await storage.getItem('fitbit-tokens');
 
     if (!tokens) {
         console.log(
             `${Date.now()} fitbit: access_tokens not set, not writing data`
         );
         return;
-        // printCallbackUrl();
-        // translateCode('cb66d319df23d67d6041532c0811ad8cf016e4ff').then(function(result) {
-        //     storage.setItem('fitbit-tokens', result);
-        // });
-        // return;
     }
 
     try {
-        await checkTokenAndRefreshIfNeeded(tokens);
+        tokens = await checkTokenAndRefreshIfNeeded(tokens);
     } catch (error) {
         return console.debug(
             `${Date.now()} fitbit: retrieve accesstoken failed ${error}`
@@ -248,4 +242,135 @@ const logFitbit = async (influxClient) => {
     }
 };
 
+const sleepMs = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Shared across every paced Fitbit call in this process so concurrent
+// requests can't slip past the pacing (Fitbit allows ~150 requests/hour).
+let lastRequestAt = 0;
+const paceRequest = async (delayMs) => {
+    const wait = lastRequestAt + delayMs - Date.now();
+    if (wait > 0) await sleepMs(wait);
+    lastRequestAt = Date.now();
+};
+
+// Performs one rate-limit-paced GET, throwing a descriptive error (tagged
+// rateLimited: true on a 429) instead of silently returning a Fitbit error
+// body that downstream code would misinterpret as valid data.
+const pacedGet = async (client, path, accessToken, delayMs) => {
+    await paceRequest(delayMs);
+    const [body, response] = await client.get(path, accessToken);
+    const statusCode = response && response.statusCode;
+    if (statusCode === 429) {
+        const error = new Error(`Fitbit rate limit hit on ${path}`);
+        error.rateLimited = true;
+        throw error;
+    }
+    if (statusCode && statusCode >= 400) {
+        throw new Error(
+            `Fitbit API error ${statusCode} on ${path}: ${JSON.stringify(body)}`
+        );
+    }
+    return body;
+};
+
+// Fetches and writes a single historical day. Does not touch the profile
+// measurement, since that only reflects the account's current state, not
+// the historical day being backfilled. Requests are made sequentially
+// (not concurrently) so pacing is accurate per-request, not per-day.
+const backfillDay = async (influxClient, tokens, date, delayMs) => {
+    const heart = await pacedGet(
+        fitbit1,
+        `/activities/heart/date/${date}/1d/1min.json`,
+        tokens.access_token,
+        delayMs
+    );
+    const sleep = await pacedGet(
+        fitbit12,
+        `/sleep/date/${date}.json`,
+        tokens.access_token,
+        delayMs
+    );
+    const activities = await pacedGet(
+        fitbit1,
+        `/activities/date/${date}.json`,
+        tokens.access_token,
+        delayMs
+    );
+    writeInfluxActivities(influxClient, activities.summary, date);
+    writeInfluxHeartrate(influxClient, heart, date);
+    writeInfluxSleep(influxClient, sleep, date);
+    await influxClient.syncWrite();
+};
+
+// Backfills [startDate, endDate] (both YYYY-MM-DD, inclusive) sequentially,
+// pacing requests to stay under Fitbit's ~150 requests/hour limit and
+// checkpointing progress so an interrupted run can be resumed by rerunning
+// with the same start/end.
+const backfillRange = async (
+    influxClient,
+    startDate,
+    endDate,
+    delayMs = 25000
+) => {
+    await storage.init();
+    let tokens = await storage.getItem('fitbit-tokens');
+    if (!tokens) {
+        throw new Error('fitbit-tokens not set, run the authorize flow first');
+    }
+
+    const checkpointKey = `fitbit-backfill-progress:${startDate}:${endDate}`;
+    const resumeFrom = await storage.getItem(checkpointKey);
+    let cursor = moment(resumeFrom || startDate);
+    const end = moment(endDate);
+
+    if (resumeFrom) {
+        console.log(
+            `${Date.now()} fitbit: resuming backfill at ${cursor.format('YYYY-MM-DD')}`
+        );
+    }
+
+    let daysSinceTokenCheck = 0;
+    while (cursor.isSameOrBefore(end, 'day')) {
+        const date = cursor.format('YYYY-MM-DD');
+
+        if (daysSinceTokenCheck === 0) {
+            await paceRequest(delayMs);
+            tokens = await checkTokenAndRefreshIfNeeded(tokens);
+        }
+
+        const maxAttempts = 3;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                await backfillDay(influxClient, tokens, date, delayMs);
+                console.log(`${Date.now()} fitbit: backfilled ${date}`);
+                break;
+            } catch (error) {
+                if (attempt === maxAttempts) {
+                    throw new Error(
+                        `backfill failed on ${date} after ${maxAttempts} attempts: ${error}. ` +
+                            `Rerun with the same start/end to resume from this date.`
+                    );
+                }
+                const backoff = error.rateLimited
+                    ? 65 * 60 * 1000
+                    : delayMs * attempt;
+                console.log(
+                    `${Date.now()} fitbit: ${date} attempt ${attempt} failed (${error}), retrying in ${backoff}ms...`
+                );
+                await sleepMs(backoff);
+            }
+        }
+
+        await storage.setItem(checkpointKey, date);
+        daysSinceTokenCheck = (daysSinceTokenCheck + 1) % 10; // recheck token roughly every 10 days
+        cursor.add(1, 'day');
+    }
+
+    await storage.removeItem(checkpointKey);
+    console.log(`${Date.now()} fitbit: backfill ${startDate}..${endDate} complete`);
+};
+
 module.exports = logFitbit;
+module.exports.getAuthorizeUrl = getAuthorizeUrl;
+module.exports.storeAuthCode = storeAuthCode;
+module.exports.backfillRange = backfillRange;
