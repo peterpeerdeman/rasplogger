@@ -386,3 +386,4 @@ module.exports = logFitbit;
 module.exports.getAuthorizeUrl = getAuthorizeUrl;
 module.exports.storeAuthCode = storeAuthCode;
 module.exports.backfillRange = backfillRange;
+module.exports.formatError = formatError;
