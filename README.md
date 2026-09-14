@@ -92,9 +92,14 @@ multi-arch (amd64 + arm64) image from `Dockerfile-amd64` and pushes it as
 (plus `:latest` on both). Requires the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repo secrets;
 GHCR uses the built-in `GITHUB_TOKEN`.
 
+use `npm version` to bump `package.json`/`package-lock.json`, commit, and tag in one step
+(the repo's `.npmrc` drops the default `v` prefix so the tag matches the plain-number scheme
+above):
+
 ```
-git tag 2.0.6
-git push origin 2.0.6
+npm version patch   # or minor / major
+git push origin master
+git push origin <the new version, e.g. 2.0.7>
 ```
 
 To build a cross-platform image locally instead:
